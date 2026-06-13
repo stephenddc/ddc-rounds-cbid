@@ -75,19 +75,19 @@ const DDC = (() => {
   // ── API helpers ───────────────────────────────────────────────────────────
 
   async function apiPost(body) {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      redirect: 'follow',
-    });
-    const text = await response.text();
-    try {
-      return JSON.parse(text);
-    } catch (e) {
-      throw new Error('Invalid response from server: ' + text.substring(0, 100));
-    }
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(body),
+    redirect: 'follow',
+  });
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    throw new Error('Invalid response from server: ' + text.substring(0, 100));
   }
+}
 
   async function apiGet(params) {
     const qs  = new URLSearchParams(params).toString();
