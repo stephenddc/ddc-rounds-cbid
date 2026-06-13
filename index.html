@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>DDC Rounds</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; color: #1a2332; background: #f0f0f0; -webkit-text-size-adjust: 100%; }
+input, textarea, button, select { font-family: inherit; }
+
+/* ── Login screen ─────────────────────────────────────────────────────── */
+#login-screen {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #0D2B4E 0%, #1E3F6F 100%);
+  padding: 20px;
+}
+.login-box { background: #fff; border-radius: 14px; padding: 36px 28px; width: 100%; max-width: 380px; box-shadow: 0 8px 40px rgba(0,0,0,0.25); }
+.login-logo { text-align: center; margin-bottom: 28px; }
+.login-logo .wordmark { font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #1565C0; margin-bottom: 4px; }
+.login-logo h1 { font-size: 22px; font-weight: 600; color: #1a2332; }
+.login-logo p  { font-size: 12px; color: #5a6a7a; margin-top: 4px; }
+.field-group { margin-bottom: 16px; }
+.field-group label { display: block; font-size: 11px; font-weight: 600; color: #5a6a7a; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+.field-group input { width: 100%; border: 1.5px solid #E0E0E0; border-radius: 8px; padding: 12px; font-size: 16px; color: #1a2332; }
+.field-group input:focus { outline: none; border-color: #1565C0; }
+.btn-primary { width: 100%; background: #1565C0; color: #fff; border: none; border-radius: 8px; padding: 13px; font-size: 16px; font-weight: 500; cursor: pointer; margin-top: 4px; }
+.btn-primary:disabled { opacity: 0.6; }
+.login-error { background: #FDECEA; border: 1px solid #EF9A9A; border-radius: 6px; padding: 10px 12px; font-size: 13px; color: #C62828; margin-top: 12px; display: none; }
+.login-error.show { display: block; }
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: -3px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── App shell ────────────────────────────────────────────────────────── */
+#app { display: none; min-height: 100vh; flex-direction: column; background: #f0f0f0; }
+#app.ready { display: flex; }
+.app-frame { max-width: 480px; margin: 0 auto; width: 100%; min-height: 100vh; background: #f0f0f0; display: flex; flex-direction: column; }
+
+.status-bar { background: #1565C0; padding: 10px 16px 6px; display: flex; justify-content: space-between; }
+.status-bar span { color: #fff; font-size: 12px; font-weight: 500; }
+.top-nav { background: #1565C0; padding: 8px 16px 12px; display: flex; align-items: center; justify-content: space-between; }
+.nav-exit { color: #90CAF9; font-size: 13px; display: flex; align-items: center; gap: 4px; cursor: pointer; background: none; border: none; }
+.nav-title { color: #fff; font-size: 15px; font-weight: 500; }
+.nav-spacer { width: 24px; }
+.tab-bar { background: #1565C0; display: flex; border-bottom: 1px solid rgba(255,255,255,0.15); overflow-x: auto; }
+.tab { padding: 10px 14px; font-size: 13px; font-weight: 500; border-bottom: 3px solid transparent; white-space: nowrap; cursor: pointer; }
+.tab.active { color: #fff; border-bottom-color: #fff; background: rgba(255,255,255,0.12); }
+.tab.inactive { color: rgba(255,255,255,0.5); }
+
+.content { flex: 1; overflow-y: auto; padding-bottom: 12px; }
+.section-header { background: #3a3a4a; color: #fff; font-size: 14px; font-weight: 500; padding: 10px 16px; }
+
+.card { background: #fff; border: 0.5px solid #E0E0E0; border-radius: 12px; margin: 10px 12px; overflow: hidden; }
+.card-header { background: #3a3a4a; padding: 10px 14px; }
+.card-header span { color: #fff; font-size: 13px; font-weight: 500; }
+.card-header p { color: #aaa; font-size: 11px; margin-top: 2px; font-style: italic; }
+.field-wrap { padding: 12px 14px; }
+
+.session-info { display: flex; flex-direction: column; gap: 8px; }
+.session-row { display: flex; align-items: center; gap: 10px; }
+.session-row i { font-size: 16px; color: #1565C0; width: 18px; flex-shrink: 0; }
+.session-row span { font-size: 13px; color: #1a2332; }
+.session-row .val { font-weight: 500; }
+
+.map-btn { background: #1565C0; color: #fff; border: none; border-radius: 8px; padding: 12px 16px; width: 100%; font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.loc-result { display: none; margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 8px; font-size: 13px; color: #5a6a7a; align-items: center; gap: 6px; }
+.loc-result.show { display: flex; }
+.loc-result i { color: #1565C0; font-size: 15px; flex-shrink: 0; }
+
+.photo-card { background: #3a3a4a; border-radius: 12px; margin: 0 12px; padding: 12px; }
+.photo-card p { color: #bbb; font-size: 12px; line-height: 1.5; margin-bottom: 10px; }
+.photo-card strong { color: #fff; }
+.photo-btns { display: flex; gap: 8px; }
+.btn-capture { background: #C62828; color: #fff; border: none; border-radius: 8px; padding: 12px 0; font-size: 14px; font-weight: 500; flex: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.btn-choose { background: #1565C0; color: #fff; border: none; border-radius: 8px; padding: 12px 0; font-size: 14px; font-weight: 500; flex: 1; cursor: pointer; }
+.photo-thumb { display: none; margin-top: 10px; }
+.photo-thumb.show { display: block; }
+.photo-thumb img { width: 100%; border-radius: 8px; display: block; }
+.photo-thumb-label { font-size: 11px; color: #ccc; margin-top: 6px; display: flex; align-items: center; gap: 6px; }
+.photo-thumb-label i { color: #4CAF50; }
+
+.activity-section { background: #fff; margin: 10px 12px; border-radius: 12px; overflow: hidden; border: 0.5px solid #E0E0E0; }
+.activity-label { background: #f5f5f5; padding: 10px 14px; font-size: 11px; font-weight: 500; color: #5a6a7a; text-transform: uppercase; letter-spacing: 0.05em; }
+.activity-row { display: flex; align-items: center; gap: 12px; padding: 14px; border-top: 0.5px solid #E0E0E0; cursor: pointer; transition: background 0.1s; }
+.activity-row:first-of-type { border-top: none; }
+.activity-row:active, .activity-row.selected { background: #F0F7FF; }
+.checkbox { width: 22px; height: 22px; border: 1.5px solid #BDBDBD; border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.checkbox.checked { background: #1565C0; border-color: #1565C0; }
+.checkbox.checked::after { content: ''; display: block; width: 6px; height: 10px; border: 2px solid #fff; border-top: none; border-left: none; transform: rotate(45deg) translateY(-1px); }
+.activity-name { font-size: 14px; color: #1a2332; }
+
+.bottom-btn-wrap { padding: 12px; background: #fff; border-top: 0.5px solid #E0E0E0; display: flex; gap: 8px; flex-shrink: 0; }
+.btn-round { background: #3a3a4a; color: #fff; border: none; border-radius: 10px; padding: 15px; width: 100%; font-size: 15px; font-weight: 500; cursor: pointer; transition: background 0.15s; }
+.btn-round.active-state { background: #1565C0; }
+.btn-round:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Location method overlay */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; align-items: flex-end; justify-content: center; }
+.overlay.open { display: flex; }
+.sheet { background: #fff; border-radius: 16px 16px 0 0; width: 100%; max-width: 480px; padding: 20px 16px; max-height: 80vh; overflow-y: auto; }
+.sheet h3 { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+.sheet p { font-size: 13px; color: #5a6a7a; margin-bottom: 14px; }
+.loc-opt { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-top: 0.5px solid #E0E0E0; cursor: pointer; }
+.loc-opt:first-of-type { border-top: none; }
+.loc-opt i { font-size: 24px; color: #1565C0; flex-shrink: 0; }
+.loc-opt-text strong { font-size: 14px; display: block; }
+.loc-opt-text span { font-size: 12px; color: #5a6a7a; }
+.sheet-cancel { width: 100%; padding: 13px; margin-top: 10px; background: #f5f5f5; border: none; border-radius: 8px; font-size: 14px; color: #5a6a7a; cursor: pointer; }
+
+.biz-list { margin-top: 4px; }
+.biz-row { display: flex; align-items: center; justify-content: space-between; padding: 13px 0; border-top: 0.5px solid #E0E0E0; cursor: pointer; }
+.biz-row:first-of-type { border-top: none; }
+.biz-row:active { opacity: 0.6; }
+.biz-name { font-size: 14px; color: #1a2332; }
+.biz-addr { font-size: 12px; color: #5a6a7a; }
+.biz-row i { font-size: 16px; color: #5a6a7a; }
+
+.gps-status { text-align: center; padding: 20px 0; }
+.gps-status i { font-size: 36px; color: #1565C0; }
+.gps-status p { font-size: 14px; color: #5a6a7a; margin-top: 10px; }
+
+/* Toast */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(8px); background: #212121; color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 13px; font-weight: 500; z-index: 200; opacity: 0; transition: all 0.25s; pointer-events: none; max-width: 90%; text-align: center; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.error { background: #C62828; }
+.toast.success { background: #2E7D32; }
+
+.hidden-file-input { display: none; }
+
+.validation-msg { font-size: 12px; color: #C62828; padding: 0 12px 8px; display: none; }
+.validation-msg.show { display: block; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     LOGIN SCREEN
+═══════════════════════════════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="wordmark">Denver Dream Center</div>
+      <h1>DDC Rounds</h1>
+      <p>E Colfax Ave — Logan St to Josephine St</p>
+    </div>
+    <div class="field-group">
+      <label>Email address</label>
+      <input type="email" id="login-email" placeholder="you@ddcdenver.org" autocomplete="username" />
+    </div>
+    <div class="field-group">
+      <label>Password</label>
+      <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter') handleLogin()" />
+    </div>
+    <button class="btn-primary" id="login-btn" onclick="handleLogin()">Sign in</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     MAIN APP
+═══════════════════════════════════════════════════════════════════════ -->
+<div id="app">
+  <div class="app-frame">
+
+    <div class="status-bar">
+      <span id="clock"></span>
+      <span><i class="ti ti-wifi"></i></span>
+    </div>
+    <div class="top-nav">
+      <button class="nav-exit" onclick="handleExit()"><i class="ti ti-logout"></i> Exit</button>
+      <div class="nav-title">Rounds – Colfax</div>
+      <div class="nav-spacer"></div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab active">Start</div>
+      <div class="tab inactive" style="opacity:0.4;">Review &amp; Submit</div>
+    </div>
+
+    <div class="content" id="content-area">
+      <div class="section-header">Start</div>
+
+      <!-- Session info -->
+      <div class="card">
+        <div class="card-header"><span>Session</span></div>
+        <div class="field-wrap">
+          <div class="session-info">
+            <div class="session-row">
+              <i class="ti ti-user"></i>
+              <span class="val" id="session-user">—</span>
+            </div>
+            <div class="session-row">
+              <i class="ti ti-calendar"></i>
+              <span class="val" id="session-date">—</span>
+            </div>
+            <div class="session-row">
+              <i class="ti ti-clock"></i>
+              <span class="val" id="session-time">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Location -->
+      <div class="card">
+        <div class="card-header"><span>Location</span></div>
+        <div class="field-wrap">
+          <button class="map-btn" onclick="openLocModal()">
+            <i class="ti ti-map-pin"></i> Get Map Point
+          </button>
+          <div class="loc-result" id="loc-result">
+            <i class="ti ti-check"></i>
+            <span id="loc-label">Location set</span>
+          </div>
+        </div>
+      </div>
+      <p class="validation-msg" id="loc-err">Location is required before proceeding.</p>
+
+      <!-- Rapid photo -->
+      <div class="photo-card">
+        <p><strong>Rapid Photos</strong><br>Use "Capture" only — it contains a date stamp. "Choose" photos do not and are invalid.</p>
+        <div class="photo-btns">
+          <button class="btn-capture" onclick="document.getElementById('photo-capture-input').click()">
+            <i class="ti ti-camera"></i> Capture
+          </button>
+          <button class="btn-choose" onclick="document.getElementById('photo-choose-input').click()">Choose</button>
+        </div>
+        <div class="photo-thumb" id="photo-thumb">
+          <img id="photo-preview" src="" alt="Captured photo" />
+          <div class="photo-thumb-label"><i class="ti ti-check"></i> <span id="photo-thumb-text">Photo captured</span></div>
+        </div>
+      </div>
+      <input type="file" accept="image/*" capture="environment" class="hidden-file-input" id="photo-capture-input" onchange="handlePhoto(this, true)" />
+      <input type="file" accept="image/*" class="hidden-file-input" id="photo-choose-input" onchange="handlePhoto(this, false)" />
+
+      <!-- Activity selector -->
+      <div class="activity-section">
+        <div class="activity-label">Select activity</div>
+        <div class="activity-row" data-activity="Clearing Doorway" onclick="selectActivity(this)">
+          <div class="checkbox"></div>
+          <span class="activity-name">Clearing Doorway</span>
+        </div>
+        <div class="activity-row" data-activity="General Outreach" onclick="selectActivity(this)">
+          <div class="checkbox"></div>
+          <span class="activity-name">General Outreach</span>
+        </div>
+        <div class="activity-row" data-activity="Blocking Right of Way/Trespassing" onclick="selectActivity(this)">
+          <div class="checkbox"></div>
+          <span class="activity-name">Blocking Right of Way/Trespassing</span>
+        </div>
+        <div class="activity-row" data-activity="Physical/Mental Health Response" onclick="selectActivity(this)">
+          <div class="checkbox"></div>
+          <span class="activity-name">Physical/Mental Health Response</span>
+        </div>
+        <div class="activity-row" data-activity="Business Engagement" onclick="selectActivity(this)">
+          <div class="checkbox"></div>
+          <span class="activity-name">Business Engagement</span>
+        </div>
+        <div class="activity-row" data-activity="Criminal Activity Observed" onclick="selectActivity(this)">
+          <div class="checkbox"></div>
+          <span class="activity-name">Criminal Activity Observed</span>
+        </div>
+      </div>
+      <p class="validation-msg" id="activity-err">Please select an activity type.</p>
+
+    </div>
+
+    <div class="bottom-btn-wrap">
+      <button class="btn-round" id="round-btn" onclick="handleRoundActivities()">Round Activities</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Location method overlay -->
+<div class="overlay" id="loc-modal">
+  <div class="sheet">
+    <h3>Set location</h3>
+    <p>How would you like to log where this occurred?</p>
+    <div class="loc-opt" onclick="showBizList()">
+      <i class="ti ti-building-store"></i>
+      <div class="loc-opt-text">
+        <strong>Select a business</strong>
+        <span>Choose from known addresses on E Colfax Ave</span>
+      </div>
+    </div>
+    <div class="loc-opt" onclick="useGPS()">
+      <i class="ti ti-current-location"></i>
+      <div class="loc-opt-text">
+        <strong>Use GPS / map pin</strong>
+        <span>Use your current location</span>
+      </div>
+    </div>
+    <button class="sheet-cancel" onclick="closeOverlay('loc-modal')">Cancel</button>
+  </div>
+</div>
+
+<!-- Business list overlay -->
+<div class="overlay" id="biz-modal">
+  <div class="sheet">
+    <h3>Select business</h3>
+    <p>E Colfax Ave — Logan St to Josephine St</p>
+    <div class="biz-list" id="biz-list">
+      <div style="text-align:center;padding:20px;color:#5a6a7a;font-size:13px;">Loading locations…</div>
+    </div>
+    <button class="sheet-cancel" onclick="closeOverlay('biz-modal')">Cancel</button>
+  </div>
+</div>
+
+<!-- GPS status overlay -->
+<div class="overlay" id="gps-modal">
+  <div class="sheet">
+    <h3>Getting your location</h3>
+    <div class="gps-status" id="gps-status">
+      <i class="ti ti-loader-2"></i>
+      <p>Requesting GPS location…</p>
+    </div>
+    <button class="sheet-cancel" onclick="closeOverlay('gps-modal')">Cancel</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Tabler icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/tabler-icons.min.css">
+
+<!-- DDC submission module -->
+<script src="ddc_app_submission.js"></script>
+
+<script>
+// ── Login ─────────────────────────────────────────────────────────────────
+
+async function handleLogin() {
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const btn      = document.getElementById('login-btn');
+  const errEl    = document.getElementById('login-error');
+
+  if (!email || !password) {
+    showLoginError('Please enter your email and password.');
+    return;
+  }
+
+  btn.innerHTML = '<span class="spinner"></span> Signing in…';
+  btn.disabled = true;
+  errEl.classList.remove('show');
+
+  try {
+    const user = await DDC.login(email, password);
+    enterApp(user);
+  } catch (err) {
+    showLoginError(err.message || 'Sign in failed. Check your credentials.');
+    btn.textContent = 'Sign in';
+    btn.disabled = false;
+  }
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function enterApp(user) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').classList.add('ready');
+  document.getElementById('session-user').textContent = user.name;
+  DDC.startNewSession();
+  updateSessionDateTime();
+  setInterval(updateSessionDateTime, 30000);
+}
+
+function handleExit() {
+  if (!confirm('Exit and return to login? Any unsaved progress will be lost.')) return;
+  DDC.logout();
+  document.getElementById('app').classList.remove('ready');
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-password').value = '';
+  resetStartScreen();
+}
+
+// ── Date/time display ────────────────────────────────────────────────────
+
+function updateSessionDateTime() {
+  const now = new Date();
+  document.getElementById('session-date').textContent = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  document.getElementById('session-time').textContent = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false });
+}
+
+// ── Location ──────────────────────────────────────────────────────────────
+
+function openLocModal() {
+  document.getElementById('loc-modal').classList.add('open');
+}
+
+function closeOverlay(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+async function showBizList() {
+  closeOverlay('loc-modal');
+  const list = document.getElementById('biz-list');
+  document.getElementById('biz-modal').classList.add('open');
+
+  // Locations were loaded on init — but refresh if empty
+  let locations = DDC.locations;
+  if (!locations || locations.length === 0) {
+    try {
+      locations = await DDC.loadLocations();
+    } catch (e) {
+      list.innerHTML = '<div style="text-align:center;padding:20px;color:#C62828;font-size:13px;">Could not load locations. Check connection.</div>';
+      return;
+    }
+  }
+
+  if (locations.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:#5a6a7a;font-size:13px;">No locations available.</div>';
+    return;
+  }
+
+  list.innerHTML = locations.map(loc => `
+    <div class="biz-row" onclick="selectBiz('${loc.location_id}')">
+      <div>
+        <div class="biz-name">${escapeHtml(loc.name)}</div>
+        <div class="biz-addr">${escapeHtml(loc.cross_street || loc.address || '')}</div>
+      </div>
+      <i class="ti ti-chevron-right"></i>
+    </div>
+  `).join('');
+}
+
+function selectBiz(locationId) {
+  closeOverlay('biz-modal');
+  try {
+    DDC.setLocationFromBusiness(locationId);
+    const session = DDC.getSession();
+    showLocationResult(session.location_name);
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
+function useGPS() {
+  closeOverlay('loc-modal');
+  const modal  = document.getElementById('gps-modal');
+  const status = document.getElementById('gps-status');
+  status.innerHTML = '<i class="ti ti-loader-2"></i><p>Requesting GPS location…</p>';
+  modal.classList.add('open');
+
+  if (!navigator.geolocation) {
+    status.innerHTML = '<i class="ti ti-alert-triangle" style="color:#C62828;"></i><p>GPS is not available on this device.</p>';
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      DDC.setLocationFromGPS(lat, lng, 'GPS location');
+      closeOverlay('gps-modal');
+      showLocationResult('GPS pin set (' + lat.toFixed(5) + ', ' + lng.toFixed(5) + ')');
+    },
+    (err) => {
+      status.innerHTML = '<i class="ti ti-alert-triangle" style="color:#C62828;"></i><p>' + getGpsErrorMessage(err) + '</p>';
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
+}
+
+function getGpsErrorMessage(err) {
+  switch (err.code) {
+    case err.PERMISSION_DENIED: return 'Location access denied. Please enable location permissions for this site.';
+    case err.POSITION_UNAVAILABLE: return 'Location information unavailable.';
+    case err.TIMEOUT: return 'Location request timed out. Please try again.';
+    default: return 'Could not get location.';
+  }
+}
+
+function showLocationResult(label) {
+  const resultEl = document.getElementById('loc-result');
+  const labelEl  = document.getElementById('loc-label');
+  resultEl.classList.add('show');
+  labelEl.textContent = label;
+  document.getElementById('loc-err').classList.remove('show');
+}
+
+// ── Photo capture ─────────────────────────────────────────────────────────
+
+function handlePhoto(input, isCaptured) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    document.getElementById('photo-preview').src = e.target.result;
+    document.getElementById('photo-thumb').classList.add('show');
+    document.getElementById('photo-thumb-text').textContent =
+      isCaptured ? 'Photo captured (date stamped)' : 'Photo selected (no date stamp — may be invalid)';
+    DDC.setPhotoCaptured(isCaptured);
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── Activity selection ───────────────────────────────────────────────────
+
+function selectActivity(row) {
+  document.querySelectorAll('.activity-row').forEach(r => {
+    r.classList.remove('selected');
+    r.querySelector('.checkbox').classList.remove('checked');
+  });
+  row.classList.add('selected');
+  row.querySelector('.checkbox').classList.add('checked');
+
+  const activity = row.dataset.activity;
+  DDC.setEngagementType(activity);
+
+  document.getElementById('activity-err').classList.remove('show');
+  document.getElementById('round-btn').classList.add('active-state');
+}
+
+// ── Round Activities button ──────────────────────────────────────────────
+
+function handleRoundActivities() {
+  const session = DDC.getSession();
+  let valid = true;
+
+  if (!session.location_name) {
+    document.getElementById('loc-err').classList.add('show');
+    valid = false;
+  }
+  if (!session.engagement_type) {
+    document.getElementById('activity-err').classList.add('show');
+    valid = false;
+  }
+
+  if (!valid) {
+    showToast('Please complete the required fields above.', 'error');
+    return;
+  }
+
+  showToast('Activity selected: ' + session.engagement_type + ' — form screens coming in the next build step!', 'success');
+
+  // NEXT STEP: navigate to the relevant engagement type form
+  // For now we just confirm the selection was captured correctly.
+  console.log('Session state so far:', DDC.getState());
+}
+
+// ── Reset ─────────────────────────────────────────────────────────────────
+
+function resetStartScreen() {
+  document.querySelectorAll('.activity-row').forEach(r => {
+    r.classList.remove('selected');
+    r.querySelector('.checkbox').classList.remove('checked');
+  });
+  document.getElementById('loc-result').classList.remove('show');
+  document.getElementById('photo-thumb').classList.remove('show');
+  document.getElementById('round-btn').classList.remove('active-state');
+  document.getElementById('loc-err').classList.remove('show');
+  document.getElementById('activity-err').classList.remove('show');
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+
+let toastTimer;
+function showToast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type ? ' ' + type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// ── Utilities ─────────────────────────────────────────────────────────────
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+
+(async function initApp() {
+  const user = await DDC.init();
+  if (user) {
+    enterApp(user);
+  } else {
+    updateSessionDateTime();
+  }
+})();
+</script>
+</body>
+</html>
