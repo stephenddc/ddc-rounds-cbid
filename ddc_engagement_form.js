@@ -363,7 +363,7 @@ function renderResolutionEntry() {
       '<p class="validation-msg" id="res-count-err">Cannot exceed ' + total + ' (the No. of People for this session).</p>' +
     '</div>';
  
-  document.getElementById('resolution-panel-title').textContent = 'Engagement resolution - NEW';
+  document.getElementById('resolution-panel-title').textContent = 'Engagement Resolution';
   document.getElementById('resolution-panel-footer').innerHTML =
     '<button class="btn-ghost-round" onclick="closeOverlayPanel(\'resolution-panel\')">Cancel</button>' +
     '<button class="btn-round active-state" onclick="startResolutionCycling()">Begin \u2192</button>';
@@ -422,7 +422,7 @@ function renderResolutionCycling() {
     '<p class="validation-msg" id="res-cond-err">Please select a condition to continue.</p></div>' +
     '<div class="card"><div class="card-header"><span>Condition observed</span></div>' + obsHtml + '</div>';
  
-  document.getElementById('resolution-panel-title').textContent = 'Engagement resolution - ' + (rec.condition !== null ? 'EDIT' : 'NEW');
+  document.getElementById('resolution-panel-title').textContent = 'Engagement Resolution';
  
   const isLast = resPanelState.current === resPanelState.total - 1;
   document.getElementById('resolution-panel-footer').innerHTML =
@@ -489,9 +489,9 @@ function renderResolutionSummary() {
     '<div class="complete-banner"><i class="ti ti-circle-check"></i><span>All ' + resPanelState.total + ' ' + (resPanelState.total === 1 ? 'person' : 'people') + ' recorded.</span></div>' +
     '<div class="card" style="margin:10px 12px;">' + rowsHtml + '</div>';
  
-  document.getElementById('resolution-panel-title').textContent = 'Engagement resolution - complete';
+  document.getElementById('resolution-panel-title').textContent = 'Engagement Resolution — Complete';
   document.getElementById('resolution-panel-footer').innerHTML =
-    '<button class="btn-ghost-round" onclick="resolutionRestart()"><i class="ti ti-edit"></i></button>' +
+    '<button class="btn-ghost-round" onclick="resolutionRestart()"><i class="ti ti-edit"></i> Edit</button>' +
     '<button class="btn-round active-state" style="background:#2E7D32;" onclick="resolutionDone()">Done</button>';
 }
  
@@ -646,8 +646,12 @@ function toggleErField(field, idx, prefix) {
   document.getElementById(prefix + idx).classList.toggle('checked');
  
   if (field === 'selectedTypes') {
+    erPanelState.records[erPanelState.current].types = erPanelState.selectedTypes.slice();
     document.getElementById('er-type-err').classList.remove('show');
     document.getElementById('er-card-type').classList.remove('has-error');
+  }
+  if (field === 'selectedSupport') {
+    erPanelState.records[erPanelState.current].support = erPanelState.selectedSupport.slice();
   }
 }
  
@@ -716,7 +720,7 @@ function renderErSummary() {
  
   document.getElementById('er-panel-title').textContent = 'Emergency Response — Complete';
   document.getElementById('er-panel-footer').innerHTML =
-    '<button class="btn-ghost-round" onclick="erRestart()"><i class="ti ti-edit"></i></button>' +
+    '<button class="btn-ghost-round" onclick="erRestart()"><i class="ti ti-edit"></i> Edit</button>' +
     '<button class="btn-round active-state" style="background:#2E7D32;" onclick="erDone()">Done</button>';
 }
  
