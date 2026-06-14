@@ -1,6 +1,6 @@
 
 /* Additional styles for engagement form module */
-.btn-ghost-round { background: #f5f5f5; color: #1a2332; border: 0.5px solid #BDBDBD; border-radius: 10px; flex: 0 0 48px; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; }
+.btn-ghost-round { background: #f5f5f5; color: #1a2332; border: 0.5px solid #BDBDBD; border-radius: 10px; flex: 0 0 auto; min-width: 48px; padding: 0 16px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 500; cursor: pointer; white-space: nowrap; }
 .eng-res-row { display: flex; align-items: center; justify-content: space-between; padding: 14px; cursor: pointer; }
 .er-status { font-size: 12px; color: #5a6a7a; }
 .er-status.done { color: #2E7D32; font-weight: 500; }
