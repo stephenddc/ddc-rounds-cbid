@@ -520,11 +520,34 @@ function openEmergencyResponsePanel() {
   const sessionTotal = formState.numPeople || 0;
   const nonResponsive = getNonResponsiveCount();
  
+  showOverlayPanel('er-panel');
+ 
+  // If records already exist, reopen them for editing directly
+  if (formState.emergencyResponse.length > 0) {
+    erPanelState.total = formState.emergencyResponse.length;
+    erPanelState.records = formState.emergencyResponse.map(function(r) {
+      const types = [];
+      ER_TYPES.forEach(function(t, i) { if (r.types.indexOf(t) >= 0) types.push(i); });
+      const support = [];
+      if (r.narcan_administered) support.push(0);
+      if (r.cpr_administered) support.push(1);
+      if (r.bandage_administered) support.push(2);
+      const resources = [];
+      if (r.contacted_911) resources.push(0);
+      if (r.contacted_non_emergency_police) resources.push(1);
+      if (r.contacted_mental_health_professional) resources.push(2);
+      if (r.contacted_311) resources.push(3);
+      if (resources.length === 0) resources.push(4); // No emergency resources contacted
+      return { types: types, support: support, resources: resources, notes: r.notes || '' };
+    });
+    erPanelState.current = 0;
+    renderErCycling();
+    return;
+  }
+ 
   erPanelState.total = 0;
   erPanelState.current = 0;
   erPanelState.records = [];
- 
-  showOverlayPanel('er-panel');
  
   const body = document.getElementById('er-panel-body');
   let hint = '';
@@ -740,7 +763,10 @@ function erDone() {
 let envPanelState = { selectedTypes: [], notes: '' };
  
 function openEnvironmentalPanel() {
-  envPanelState = { selectedTypes: [], notes: '' };
+  const existing = formState.environmental[0];
+  envPanelState = existing
+    ? { selectedTypes: existing.types.slice(), notes: existing.notes || '' }
+    : { selectedTypes: [], notes: '' };
   showOverlayPanel('env-panel');
   renderEnvironmentalPanel();
 }
@@ -780,7 +806,7 @@ function envSave() {
     document.getElementById('env-card-type').classList.add('has-error');
     return;
   }
-  formState.environmental.push({ types: envPanelState.selectedTypes.slice(), notes: envPanelState.notes });
+  formState.environmental = [{ types: envPanelState.selectedTypes.slice(), notes: envPanelState.notes }];
   closeOverlayPanel('env-panel');
   renderEngagementForm();
 }
@@ -790,7 +816,10 @@ function envSave() {
 let kgfsPanelState = { selectedTypes: [], notes: '' };
  
 function openKgfsPanel() {
-  kgfsPanelState = { selectedTypes: [], notes: '' };
+  const existing = formState.kgfs[0];
+  kgfsPanelState = existing
+    ? { selectedTypes: existing.types.slice(), notes: existing.notes || '' }
+    : { selectedTypes: [], notes: '' };
   showOverlayPanel('kgfs-panel');
   renderKgfsPanel();
 }
@@ -831,7 +860,7 @@ function kgfsSave() {
     document.getElementById('kgfs-card-type').classList.add('has-error');
     return;
   }
-  formState.kgfs.push({ types: kgfsPanelState.selectedTypes.slice(), notes: kgfsPanelState.notes });
+  formState.kgfs = [{ types: kgfsPanelState.selectedTypes.slice(), notes: kgfsPanelState.notes }];
   closeOverlayPanel('kgfs-panel');
   renderEngagementForm();
 }
