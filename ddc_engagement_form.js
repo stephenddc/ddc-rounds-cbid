@@ -252,7 +252,7 @@ function renderEngagementForm() {
  
   const bottomWrap = document.querySelector('.bottom-btn-wrap');
   bottomWrap.innerHTML =
-    '<button class="btn-ghost-round" onclick="confirmBackToStart()"><i class="ti ti-arrow-left"></i></button>' +
+    '<button class="btn-ghost-round" onclick="confirmBackToStart()"><i class="ti ti-arrow-left"></i> Back</button>' +
     '<button class="btn-round active-state" onclick="handleSaveAndContinue()">Save &amp; Continue \u2192</button>';
 }
  
@@ -427,7 +427,7 @@ function renderResolutionCycling() {
   const isLast = resPanelState.current === resPanelState.total - 1;
   document.getElementById('resolution-panel-footer').innerHTML =
     (resPanelState.current > 0
-      ? '<button class="btn-ghost-round" onclick="resolutionPrev()"><i class="ti ti-arrow-left"></i></button>'
+      ? '<button class="btn-ghost-round" onclick="resolutionPrev()"><i class="ti ti-arrow-left"></i> Back</button>'
       : '<button class="btn-ghost-round" onclick="closeOverlayPanel(\'resolution-panel\')">Cancel</button>') +
     '<button class="btn-round active-state" onclick="resolutionSave(' + isLast + ')">' + (isLast ? 'Finish' : 'Next person \u2192') + '</button>';
 }
@@ -614,7 +614,7 @@ function renderErCycling() {
   const isLast = erPanelState.current === erPanelState.total - 1;
   document.getElementById('er-panel-footer').innerHTML =
     (erPanelState.current > 0
-      ? '<button class="btn-ghost-round" onclick="erPrev()"><i class="ti ti-arrow-left"></i></button>'
+      ? '<button class="btn-ghost-round" onclick="erPrev()"><i class="ti ti-arrow-left"></i> Back</button>'
       : '<button class="btn-ghost-round" onclick="closeOverlayPanel(\'er-panel\')">Cancel</button>') +
     '<button class="btn-round active-state" onclick="erSave(' + isLast + ')">' + (isLast ? 'Finish' : 'Next \u2192') + '</button>';
 }
