@@ -1,3 +1,4 @@
+
 /* Additional styles for engagement form module */
 .btn-ghost-round { background: #f5f5f5; color: #1a2332; border: 0.5px solid #BDBDBD; border-radius: 10px; flex: 0 0 48px; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; }
 .eng-res-row { display: flex; align-items: center; justify-content: space-between; padding: 14px; cursor: pointer; }
@@ -39,3 +40,27 @@
 .tag-green { background: #E8F5E9; color: #1B5E20; }
 .tag-amber { background: #FFF3CD; color: #633806; }
 .tag-purple { background: #F3E5F5; color: #4A148C; }
+ 
+/* Core form control styles - checkboxes, radios, inputs, textareas */
+.check-row { display: flex; align-items: center; gap: 12px; padding: 14px; border-top: 0.5px solid #E0E0E0; cursor: pointer; }
+.check-row:first-of-type { border-top: none; }
+.check-row:active { background: #F0F7FF; }
+.check-label { font-size: 14px; color: #1a2332; line-height: 1.4; flex: 1; }
+ 
+.checkbox { width: 24px; height: 24px; border: 1.5px solid #BDBDBD; border-radius: 5px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.checkbox.checked { background: #1565C0; border-color: #1565C0; }
+.checkbox.checked::after { content: ''; display: block; width: 7px; height: 12px; border: 2px solid #fff; border-top: none; border-left: none; transform: rotate(45deg) translateY(-1px); }
+ 
+.radio { width: 24px; height: 24px; border: 1.5px solid #BDBDBD; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.radio.selected { border-color: #1565C0; }
+.radio.selected::after { content: ''; width: 13px; height: 13px; border-radius: 50%; background: #1565C0; display: block; }
+ 
+.num-input { width: 100%; border: 1.5px solid #BDBDBD; border-radius: 8px; padding: 14px; font-size: 18px; font-weight: 500; color: #1a2332; background: #fff; }
+.num-input:focus { outline: none; border-color: #1565C0; }
+.num-input::placeholder { color: #9E9E9E; font-size: 16px; font-weight: 400; }
+ 
+.notes-area { width: 100%; border: 1.5px solid #BDBDBD; border-radius: 8px; resize: vertical; padding: 14px; font-size: 16px; line-height: 1.5; color: #1a2332; background: #fff; min-height: 110px; font-family: inherit; box-sizing: border-box; }
+.notes-area:focus { outline: none; border-color: #1565C0; }
+.notes-area::placeholder { color: #9E9E9E; }
+ 
+.field-wrap { padding: 12px 14px; }
