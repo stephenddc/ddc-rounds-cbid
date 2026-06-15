@@ -446,6 +446,7 @@ function makeEmptyResRecord() {
  
 function renderResolutionCycling() {
   const rec = resPanelState.records[resPanelState.current];
+  console.log('[DEBUG] renderResolutionCycling reading record=', JSON.stringify(rec));
   resPanelState.selectedCondition = rec.condition;
   resPanelState.selectedObs = rec.obs.slice();
   resPanelState.selectedResourcesOffered = rec.resourcesOffered;
@@ -534,8 +535,10 @@ function renderResourcesOfferedSection() {
 }
  
 function selectResourcesOffered(val) {
+  console.log('[DEBUG] selectResourcesOffered called with', val, 'current selectedCondition=', resPanelState.selectedCondition, 'selectedObs=', JSON.stringify(resPanelState.selectedObs));
   resPanelState.selectedResourcesOffered = val;
   resPanelState.records[resPanelState.current] = buildResRecordFromPanel();
+  console.log('[DEBUG] saved record=', JSON.stringify(resPanelState.records[resPanelState.current]));
   document.getElementById('res-offered-err').classList.remove('show');
   renderResolutionCycling();
 }
