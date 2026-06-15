@@ -535,6 +535,7 @@ function renderResourcesOfferedSection() {
  
 function selectResourcesOffered(val) {
   resPanelState.selectedResourcesOffered = val;
+  resPanelState.records[resPanelState.current] = buildResRecordFromPanel();
   document.getElementById('res-offered-err').classList.remove('show');
   renderResolutionCycling();
 }
