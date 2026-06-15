@@ -13,6 +13,14 @@ const RESOLUTION_OBSERVATIONS = [
   'Active drug use observed',
 ];
  
+const RESOURCES_OFFERED_TYPES = [
+  'Shelter',
+  'Meals',
+  'Clothing',
+  'Medical',
+  'Reunification',
+];
+ 
 const ER_TYPES = [
   'Drug Overdose (DO)',
   'Life Threatening Injury (LTI)',
@@ -64,6 +72,8 @@ const ENGAGEMENT_CONFIGS = {
     showHealthClassification: false,
     showCriminalActivity: false,
     showFullSections: true,
+    showCondition: true,
+    mutuallyExclusiveInitiated: true,
   },
   'General Outreach': {
     title: 'General Outreach',
@@ -71,6 +81,8 @@ const ENGAGEMENT_CONFIGS = {
     showHealthClassification: false,
     showCriminalActivity: false,
     showFullSections: true,
+    showCondition: false,
+    mutuallyExclusiveInitiated: true,
   },
   'Blocking Right of Way/Trespassing': {
     title: 'Blocking Right of Way/Trespassing',
@@ -78,6 +90,8 @@ const ENGAGEMENT_CONFIGS = {
     showHealthClassification: false,
     showCriminalActivity: false,
     showFullSections: true,
+    showCondition: true,
+    mutuallyExclusiveInitiated: true,
   },
   'Physical/Mental Health Response': {
     title: 'Physical/Mental Health Response',
@@ -85,6 +99,8 @@ const ENGAGEMENT_CONFIGS = {
     showHealthClassification: true,
     showCriminalActivity: false,
     showFullSections: true,
+    showCondition: true,
+    mutuallyExclusiveInitiated: true,
   },
   'Business Engagement': {
     title: 'Business Engagement',
@@ -92,6 +108,8 @@ const ENGAGEMENT_CONFIGS = {
     showHealthClassification: false,
     showCriminalActivity: false,
     showFullSections: false,
+    showCondition: false,
+    mutuallyExclusiveInitiated: false,
   },
   'Criminal Activity Observed': {
     title: 'Criminal Activity Observed',
@@ -99,6 +117,8 @@ const ENGAGEMENT_CONFIGS = {
     showHealthClassification: false,
     showCriminalActivity: true,
     showFullSections: true,
+    showCondition: true,
+    mutuallyExclusiveInitiated: true,
   },
 };
  
@@ -166,8 +186,11 @@ function renderEngagementForm() {
   html += '' +
     '<div class="card">' +
       '<div class="card-header"><span>How was the interaction initiated?</span></div>' +
-      renderCheckRow('init-0', 'Responded to a call by a business', formState.initiated.indexOf(0) >= 0, "toggleArrayField('initiated', 0)") +
-      renderCheckRow('init-1', 'Encountered during normal rounds', formState.initiated.indexOf(1) >= 0, "toggleArrayField('initiated', 1)") +
+      (cfg.mutuallyExclusiveInitiated
+        ? renderRadioRow('init-0', 'Responded to a call by a business', formState.initiated.indexOf(0) >= 0, "selectInitiated(0)") +
+          renderRadioRow('init-1', 'Encountered during normal rounds', formState.initiated.indexOf(1) >= 0, "selectInitiated(1)")
+        : renderCheckRow('init-0', 'Responded to a call by a business', formState.initiated.indexOf(0) >= 0, "toggleArrayField('initiated', 0)") +
+          renderCheckRow('init-1', 'Encountered during normal rounds', formState.initiated.indexOf(1) >= 0, "toggleArrayField('initiated', 1)")) +
     '</div>';
  
   if (cfg.showHomelessInteraction) {
@@ -313,6 +336,11 @@ function toggleArrayField(field, idx) {
   renderEngagementForm();
 }
  
+function selectInitiated(idx) {
+  formState.initiated = [idx];
+  renderEngagementForm();
+}
+ 
 function selectHealthClassification(idx) {
   formState.healthClassification = idx;
   renderEngagementForm();
@@ -343,7 +371,20 @@ function openResolutionPanel() {
   resPanelState.current = 0;
   resPanelState.records = [];
   for (let i = 0; i < total; i++) {
-    resPanelState.records.push(existing[i] ? { condition: existing[i].condition, obs: existing[i].obs.slice() } : { condition: null, obs: [] });
+    const e = existing[i];
+    resPanelState.records.push(e ? {
+      condition: e.condition,
+      obs: e.obs.slice(),
+      resourcesOffered: e.resourcesOffered != null ? e.resourcesOffered : null,
+      resourcesDetail: e.resourcesDetail ? e.resourcesDetail.map(function(d) { return { offered: d.offered, accepted: d.accepted }; }) : RESOURCES_OFFERED_TYPES.map(function() { return { offered: false, accepted: false }; }),
+      resourcesNotes: e.resourcesNotes || '',
+    } : {
+      condition: null,
+      obs: [],
+      resourcesOffered: null,
+      resourcesDetail: RESOURCES_OFFERED_TYPES.map(function() { return { offered: false, accepted: false }; }),
+      resourcesNotes: '',
+    });
   }
   showOverlayPanel('resolution-panel');
   renderResolutionEntry();
@@ -386,41 +427,72 @@ function startResolutionCycling() {
   if (inputVal > resPanelState.total) { showToast('Cannot exceed ' + resPanelState.total + ' (No. of People).', 'error'); return; }
  
   resPanelState.total = inputVal;
-  const trimmed = resPanelState.records.slice(0, inputVal).map(function(r) { return r || { condition: null, obs: [] }; });
-  while (trimmed.length < inputVal) trimmed.push({ condition: null, obs: [] });
+  const trimmed = resPanelState.records.slice(0, inputVal).map(function(r) { return r || makeEmptyResRecord(); });
+  while (trimmed.length < inputVal) trimmed.push(makeEmptyResRecord());
   resPanelState.records = trimmed;
   resPanelState.current = 0;
   renderResolutionCycling();
+}
+ 
+function makeEmptyResRecord() {
+  return {
+    condition: null,
+    obs: [],
+    resourcesOffered: null,
+    resourcesDetail: RESOURCES_OFFERED_TYPES.map(function() { return { offered: false, accepted: false }; }),
+    resourcesNotes: '',
+  };
 }
  
 function renderResolutionCycling() {
   const rec = resPanelState.records[resPanelState.current];
   resPanelState.selectedCondition = rec.condition;
   resPanelState.selectedObs = rec.obs.slice();
+  resPanelState.selectedResourcesOffered = rec.resourcesOffered;
+  resPanelState.selectedResourcesDetail = rec.resourcesDetail.map(function(d) { return { offered: d.offered, accepted: d.accepted }; });
+  resPanelState.selectedResourcesNotes = rec.resourcesNotes || '';
  
+  const cfg = currentEngagementConfig;
   const body = document.getElementById('resolution-panel-body');
  
   let dotsHtml = '';
   for (let i = 0; i < resPanelState.records.length; i++) {
     const r = resPanelState.records[i];
-    dotsHtml += '<div class="dot ' + (i === resPanelState.current ? 'active' : (r.condition !== null ? 'done' : '')) + '"></div>';
+    const isDone = cfg.showCondition ? (r.condition !== null) : (r.resourcesOffered !== null);
+    dotsHtml += '<div class="dot ' + (i === resPanelState.current ? 'active' : (isDone ? 'done' : '')) + '"></div>';
   }
  
-  let condHtml = '';
-  for (let i = 0; i < RESOLUTION_CONDITIONS.length; i++) {
-    condHtml += renderRadioRow('res-cond-' + i, RESOLUTION_CONDITIONS[i], resPanelState.selectedCondition === i, "selectResCondition(" + i + ")");
+  let html = '<div class="person-badge"><span>Person ' + (resPanelState.current + 1) + ' of ' + resPanelState.total + '</span><div class="dots">' + dotsHtml + '</div></div>';
+ 
+  if (cfg.showCondition) {
+    let condHtml = '';
+    for (let i = 0; i < RESOLUTION_CONDITIONS.length; i++) {
+      condHtml += renderRadioRow('res-cond-' + i, RESOLUTION_CONDITIONS[i], resPanelState.selectedCondition === i, "selectResCondition(" + i + ")");
+    }
+    html += '<div class="card" style="margin-top:10px;"><div class="card-header"><span>Condition of the individual</span></div>' + condHtml +
+      '<p class="validation-msg" id="res-cond-err">Please select a condition to continue.</p></div>';
   }
  
   let obsHtml = '';
   for (let i = 0; i < RESOLUTION_OBSERVATIONS.length; i++) {
     obsHtml += renderCheckRow('res-obs-' + i, RESOLUTION_OBSERVATIONS[i], resPanelState.selectedObs.indexOf(i) >= 0, "toggleResObs(" + i + ")");
   }
+  html += '<div class="card"' + (cfg.showCondition ? '' : ' style="margin-top:10px;"') + '><div class="card-header"><span>Condition observed</span></div>' + obsHtml + '</div>';
  
-  body.innerHTML = '' +
-    '<div class="person-badge"><span>Person ' + (resPanelState.current + 1) + ' of ' + resPanelState.total + '</span><div class="dots">' + dotsHtml + '</div></div>' +
-    '<div class="card" style="margin-top:10px;"><div class="card-header"><span>Condition of the individual</span></div>' + condHtml +
-    '<p class="validation-msg" id="res-cond-err">Please select a condition to continue.</p></div>' +
-    '<div class="card"><div class="card-header"><span>Condition observed</span></div>' + obsHtml + '</div>';
+  // Were resources offered?
+  html += '' +
+    '<div class="card" id="res-offered-card">' +
+      '<div class="card-header"><span>Were resources offered?</span></div>' +
+      renderRadioRow('res-offered-yes', 'Yes', resPanelState.selectedResourcesOffered === true, "selectResourcesOffered(true)") +
+      renderRadioRow('res-offered-no', 'No', resPanelState.selectedResourcesOffered === false, "selectResourcesOffered(false)") +
+      '<p class="validation-msg" id="res-offered-err">Please select Yes or No.</p>' +
+    '</div>';
+ 
+  if (resPanelState.selectedResourcesOffered === true) {
+    html += renderResourcesOfferedSection();
+  }
+ 
+  body.innerHTML = html;
  
   document.getElementById('resolution-panel-title').textContent = 'Engagement Resolution';
  
@@ -430,6 +502,46 @@ function renderResolutionCycling() {
       ? '<button class="btn-ghost-round" onclick="resolutionPrev()"><i class="ti ti-arrow-left"></i> Back</button>'
       : '<button class="btn-ghost-round" onclick="closeOverlayPanel(\'resolution-panel\')">Cancel</button>') +
     '<button class="btn-round active-state" onclick="resolutionSave(' + isLast + ')">' + (isLast ? 'Finish' : 'Next person \u2192') + '</button>';
+}
+ 
+function renderResourcesOfferedSection() {
+  let rowsHtml = '';
+  for (let i = 0; i < RESOURCES_OFFERED_TYPES.length; i++) {
+    const d = resPanelState.selectedResourcesDetail[i];
+    rowsHtml += '' +
+      '<div class="res-offer-row">' +
+        '<span class="res-offer-label">' + escapeHtml(RESOURCES_OFFERED_TYPES[i]) + '</span>' +
+        '<label class="res-offer-check">' +
+          '<div class="checkbox ' + (d.offered ? 'checked' : '') + '" id="res-offer-' + i + '" onclick="toggleResourceDetail(' + i + ', \'offered\')"></div>' +
+          '<span>Offered</span>' +
+        '</label>' +
+        '<label class="res-offer-check">' +
+          '<div class="checkbox ' + (d.accepted ? 'checked' : '') + '" id="res-accept-' + i + '" onclick="toggleResourceDetail(' + i + ', \'accepted\')"></div>' +
+          '<span>Accepted</span>' +
+        '</label>' +
+      '</div>';
+  }
+ 
+  return '' +
+    '<div class="card" id="res-offered-detail-card">' +
+      '<div class="card-header"><span>Resources offered / accepted</span><p>Select all that apply</p></div>' +
+      '<div class="res-offer-table">' + rowsHtml + '</div>' +
+      '<div class="field-wrap">' +
+        '<label class="form-label-sm">Notes</label>' +
+        '<textarea class="notes-area" placeholder="Enter text..." oninput="resPanelState.selectedResourcesNotes = this.value">' + escapeHtml(resPanelState.selectedResourcesNotes) + '</textarea>' +
+      '</div>' +
+    '</div>';
+}
+ 
+function selectResourcesOffered(val) {
+  resPanelState.selectedResourcesOffered = val;
+  document.getElementById('res-offered-err').classList.remove('show');
+  renderResolutionCycling();
+}
+ 
+function toggleResourceDetail(idx, key) {
+  resPanelState.selectedResourcesDetail[idx][key] = !resPanelState.selectedResourcesDetail[idx][key];
+  document.getElementById('res-' + (key === 'offered' ? 'offer' : 'accept') + '-' + idx).classList.toggle('checked');
 }
  
 function selectResCondition(idx) {
@@ -449,22 +561,38 @@ function toggleResObs(idx) {
 }
  
 function resolutionSave(finish) {
-  if (resPanelState.selectedCondition === null) {
+  const cfg = currentEngagementConfig;
+  if (cfg.showCondition && resPanelState.selectedCondition === null) {
     document.getElementById('res-cond-err').classList.add('show');
     return;
   }
-  resPanelState.records[resPanelState.current] = { condition: resPanelState.selectedCondition, obs: resPanelState.selectedObs.slice() };
+  if (resPanelState.selectedResourcesOffered === null) {
+    document.getElementById('res-offered-err').classList.add('show');
+    return;
+  }
+  resPanelState.records[resPanelState.current] = buildResRecordFromPanel();
   if (finish) renderResolutionSummary();
   else { resPanelState.current++; renderResolutionCycling(); }
 }
  
+function buildResRecordFromPanel() {
+  return {
+    condition: resPanelState.selectedCondition,
+    obs: resPanelState.selectedObs.slice(),
+    resourcesOffered: resPanelState.selectedResourcesOffered,
+    resourcesDetail: resPanelState.selectedResourcesDetail.map(function(d) { return { offered: d.offered, accepted: d.accepted }; }),
+    resourcesNotes: resPanelState.selectedResourcesNotes,
+  };
+}
+ 
 function resolutionPrev() {
-  resPanelState.records[resPanelState.current] = { condition: resPanelState.selectedCondition, obs: resPanelState.selectedObs.slice() };
+  resPanelState.records[resPanelState.current] = buildResRecordFromPanel();
   resPanelState.current--;
   renderResolutionCycling();
 }
  
 function renderResolutionSummary() {
+  const cfg = currentEngagementConfig;
   const body = document.getElementById('resolution-panel-body');
  
   let rowsHtml = '';
@@ -474,12 +602,36 @@ function renderResolutionSummary() {
     if (r.obs.length) {
       obsHtml = r.obs.map(function(o) { return '<span class="tag tag-amber">' + escapeHtml(RESOLUTION_OBSERVATIONS[o]) + '</span>'; }).join('');
     }
+ 
+    let resourcesHtml = '';
+    if (r.resourcesOffered === true) {
+      const offeredTags = [];
+      for (let j = 0; j < RESOURCES_OFFERED_TYPES.length; j++) {
+        const d = r.resourcesDetail[j];
+        if (d.offered || d.accepted) {
+          let label = RESOURCES_OFFERED_TYPES[j];
+          if (d.offered && d.accepted) label += ' (Offered & Accepted)';
+          else if (d.offered) label += ' (Offered)';
+          else label += ' (Accepted)';
+          offeredTags.push('<span class="tag tag-green">' + escapeHtml(label) + '</span>');
+        }
+      }
+      resourcesHtml = '<div style="margin-top:2px;">' + (offeredTags.length ? offeredTags.join('') : '<span style="font-size:11px;color:#5a6a7a;">Resources offered, none selected</span>') + '</div>';
+    } else if (r.resourcesOffered === false) {
+      resourcesHtml = '<div style="margin-top:2px;"><span style="font-size:11px;color:#5a6a7a;">No resources offered</span></div>';
+    }
+ 
+    const condHtml = cfg.showCondition
+      ? '<div class="person-cond">' + escapeHtml(RESOLUTION_CONDITIONS[r.condition]) + '</div>'
+      : '';
+ 
     rowsHtml += '' +
       '<div class="person-row">' +
         '<div class="person-num">' + (i + 1) + '</div>' +
         '<div style="flex:1;">' +
-          '<div class="person-cond">' + escapeHtml(RESOLUTION_CONDITIONS[r.condition]) + '</div>' +
+          condHtml +
           '<div style="margin-top:2px;">' + obsHtml + '</div>' +
+          resourcesHtml +
         '</div>' +
         '<button class="edit-btn" onclick="resolutionEdit(' + i + ')"><i class="ti ti-edit"></i></button>' +
       '</div>';
@@ -499,7 +651,15 @@ function resolutionEdit(idx) { resPanelState.current = idx; renderResolutionCycl
 function resolutionRestart()  { resPanelState.current = 0;  renderResolutionCycling(); }
  
 function resolutionDone() {
-  formState.resolution = resPanelState.records.map(function(r) { return { condition: r.condition, obs: r.obs.slice() }; });
+  formState.resolution = resPanelState.records.map(function(r) {
+    return {
+      condition: r.condition,
+      obs: r.obs.slice(),
+      resourcesOffered: r.resourcesOffered,
+      resourcesDetail: r.resourcesDetail.map(function(d) { return { offered: d.offered, accepted: d.accepted }; }),
+      resourcesNotes: r.resourcesNotes,
+    };
+  });
   closeOverlayPanel('resolution-panel');
   renderEngagementForm();
 }
@@ -933,11 +1093,23 @@ function handleSaveAndContinue() {
   }
  
   const resolutionRecords = formState.resolution.map(function(r) {
+    const resourcesOfferedAccepted = [];
+    if (r.resourcesOffered === true) {
+      for (let j = 0; j < RESOURCES_OFFERED_TYPES.length; j++) {
+        const d = r.resourcesDetail[j];
+        if (d.offered || d.accepted) {
+          resourcesOfferedAccepted.push({ type: RESOURCES_OFFERED_TYPES[j], offered: d.offered, accepted: d.accepted });
+        }
+      }
+    }
     return {
-      condition: RESOLUTION_CONDITIONS[r.condition],
+      condition: r.condition !== null ? RESOLUTION_CONDITIONS[r.condition] : null,
       weapons_observed: r.obs.indexOf(0) >= 0,
       drug_supplies_observed: r.obs.indexOf(1) >= 0,
       active_drug_use_observed: r.obs.indexOf(2) >= 0,
+      resources_offered: r.resourcesOffered === true,
+      resources_offered_accepted: resourcesOfferedAccepted,
+      resources_notes: r.resourcesNotes || '',
     };
   });
   DDC.setResolution(resolutionRecords);
