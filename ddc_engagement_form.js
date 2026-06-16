@@ -555,14 +555,34 @@ function selectResourcesOffered(val) {
 }
  
 function toggleResourceDetail(idx, key) {
-  resPanelState.selectedResourcesDetail[idx][key] = !resPanelState.selectedResourcesDetail[idx][key];
+  const detail = resPanelState.selectedResourcesDetail[idx];
   const OTHER_IDX = RESOURCES_OFFERED_TYPES.indexOf('Other');
+ 
+  if (key === 'accepted') {
+    // Checking accepted auto-checks offered; unchecking accepted is always allowed
+    detail.accepted = !detail.accepted;
+    if (detail.accepted && !detail.offered) {
+      detail.offered = true;
+    }
+  } else {
+    // key === 'offered': cannot uncheck offered while accepted is still checked
+    if (detail.offered && detail.accepted) {
+      // Silently ignore — can't remove offered while accepted is on
+      return;
+    }
+    detail.offered = !detail.offered;
+  }
+ 
   if (idx === OTHER_IDX && key === 'offered') {
     // Re-render so the required notes field appears/disappears
     resPanelState.records[resPanelState.current] = buildResRecordFromPanel();
     renderResolutionCycling();
   } else {
-    document.getElementById('res-' + (key === 'offered' ? 'offer' : 'accept') + '-' + idx).classList.toggle('checked');
+    // Targeted DOM update for performance
+    const offeredEl  = document.getElementById('res-offer-' + idx);
+    const acceptedEl = document.getElementById('res-accept-' + idx);
+    if (offeredEl)  offeredEl.className  = 'checkbox' + (detail.offered  ? ' checked' : '');
+    if (acceptedEl) acceptedEl.className = 'checkbox' + (detail.accepted ? ' checked' : '');
     const errEl = document.getElementById('res-offered-detail-err');
     if (errEl) errEl.classList.remove('show');
   }
