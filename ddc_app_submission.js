@@ -21,7 +21,7 @@
 const DDC = (() => {
  
   // ── Config ────────────────────────────────────────────────────────────────
-  const API_URL = 'https://script.google.com/macros/s/AKfycbynM8sDNF4tapLJzdzFbYaX4pqNfizj-KYFJHWDKf1RznuqxNtL3t1qh48scXdrqC1vNw/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbz4HqUvJToO8bsU9T6sP4mw2hbeKQPVVSCSLHKA4_FDgaBJJp_IaLTF7imafSW_JlLKqQ/exec';
  
   // ── Session state ─────────────────────────────────────────────────────────
   // This object is built up as the user moves through the form screens.
