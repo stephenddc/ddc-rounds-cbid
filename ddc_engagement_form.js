@@ -1236,12 +1236,11 @@ function handleSaveAndContinue() {
     }).length;
     if (nonResponsiveCount > 0 && formState.emergencyResponse.length < nonResponsiveCount) {
       showToast(
-        nonResponsiveCount + ' person' + (nonResponsiveCount > 1 ? 's' : '') +
-        ' marked Non Responsive — please complete at least ' + nonResponsiveCount +
-        ' Emergency Response record' + (nonResponsiveCount > 1 ? 's' : '') + '.',
+        'Please create the required Emergency Response record' + (nonResponsiveCount > 1 ? 's' : '') +
+        ' (' + nonResponsiveCount + ' person' + (nonResponsiveCount > 1 ? 's' : '') + ' marked Non Responsive).',
         'error'
       );
-      valid = false;
+      return;
     }
   }
  
