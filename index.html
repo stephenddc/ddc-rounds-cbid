@@ -506,14 +506,26 @@ function handlePhoto(input, isCaptured) {
  
   const reader = new FileReader();
   reader.onload = (e) => {
-    const imageData = e.target.result;
-    console.log('Photo captured, data length:', imageData ? imageData.length : 0, 'isCaptured:', isCaptured);
-    document.getElementById('photo-preview').src = imageData;
-    document.getElementById('photo-thumb').classList.add('show');
-    document.getElementById('photo-thumb-text').textContent =
-      isCaptured ? 'Photo captured (date stamped)' : 'Photo selected (no date stamp — may be invalid)';
-    DDC.setPhotoCaptured(isCaptured, imageData);
-    console.log('DDC photo_data set, length:', DDC.getSession().photo_data ? DDC.getSession().photo_data.length : 0);
+    // Compress the image before storing — 10MB originals are too large for API
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      const MAX_WIDTH = 1200;
+      const scale = Math.min(1, MAX_WIDTH / img.width);
+      canvas.width  = Math.round(img.width  * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const compressed = canvas.toDataURL('image/jpeg', 0.7); // 70% quality
+ 
+      document.getElementById('photo-preview').src = compressed;
+      document.getElementById('photo-thumb').classList.add('show');
+      document.getElementById('photo-thumb-text').textContent =
+        isCaptured ? 'Photo captured (date stamped)' : 'Photo selected (no date stamp — may be invalid)';
+      DDC.setPhotoCaptured(isCaptured, compressed);
+      console.log('Photo compressed to:', compressed.length, 'chars');
+    };
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
@@ -640,7 +652,5 @@ window.goToStartScreen = goToStartScreen;
 </script>
 </body>
 </html>
- 
-
 
 
