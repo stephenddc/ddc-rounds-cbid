@@ -46,8 +46,8 @@ const DDC = (() => {
       interaction_initiated: null,
       notes:            null,
       photo_captured:   false,
- 
-      // Type-specific fields
+      photo_data:       null,
+      photo_url:        null,
       homeless_interaction_type: null,  // Blocking ROW
       health_classification:     null,  // Physical/Mental Health
       criminal_activity_types:   [],    // Criminal Activity
@@ -315,15 +315,19 @@ const DDC = (() => {
           photo_data: state.session.photo_data,
           mime_type:  'image/jpeg',
         });
+        console.log('Photo upload result:', JSON.stringify(photoResult));
         if (photoResult.photo_url) {
           state.session.photo_url = photoResult.photo_url;
+        } else if (photoResult.error) {
+          console.warn('Photo upload error:', photoResult.error);
         }
       } catch (photoErr) {
-        // Don't block submission if photo upload fails — just log it
         console.warn('Photo upload failed:', photoErr.message);
       }
       // Clear raw image data from payload — it's large and already uploaded
       state.session.photo_data = null;
+    } else {
+      console.log('Photo upload skipped — captured:', state.session.photo_captured, 'data present:', !!state.session.photo_data);
     }
  
     // Build payload
