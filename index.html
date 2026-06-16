@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -507,11 +506,12 @@ function handlePhoto(input, isCaptured) {
  
   const reader = new FileReader();
   reader.onload = (e) => {
-    document.getElementById('photo-preview').src = e.target.result;
+    const imageData = e.target.result; // full base64 data URL
+    document.getElementById('photo-preview').src = imageData;
     document.getElementById('photo-thumb').classList.add('show');
     document.getElementById('photo-thumb-text').textContent =
       isCaptured ? 'Photo captured (date stamped)' : 'Photo selected (no date stamp — may be invalid)';
-    DDC.setPhotoCaptured(isCaptured);
+    DDC.setPhotoCaptured(isCaptured, imageData);
   };
   reader.readAsDataURL(file);
 }
@@ -638,3 +638,7 @@ window.goToStartScreen = goToStartScreen;
 </script>
 </body>
 </html>
+ 
+
+
+
