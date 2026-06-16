@@ -128,7 +128,12 @@ const ENGAGEMENT_CONFIGS = {
     showCondition: false,
     showResolution: false,
     showDpdCall: false,
-    mutuallyExclusiveInitiated: false,
+    showNumPeople: false,
+    mutuallyExclusiveInitiated: true,
+    initiatedOptions: [
+      'Dream Team initiated Community Engagement',
+      'Business Requested Engagement',
+    ],
   },
   'Criminal Activity Observed': {
     title: 'Criminal Activity Observed',
@@ -197,23 +202,24 @@ function renderEngagementForm() {
  
   let html = '<div class="section-header">' + escapeHtml(cfg.title) + '</div>';
  
-  html += '' +
-    '<div class="card">' +
-      '<div class="card-header"><span>No. of people</span></div>' +
-      '<div class="field-wrap">' +
-        '<input class="num-input" type="number" inputmode="numeric" min="1" placeholder="Enter number..." id="num-people" value="' + (formState.numPeople || '') + '" oninput="onNumPeopleChange(this.value)" />' +
+  if (cfg.showNumPeople !== false) {
+    html += '' +
+      '<div class="card">' +
+        '<div class="card-header"><span>No. of people</span></div>' +
+        '<div class="field-wrap">' +
+          '<input class="num-input" type="number" inputmode="numeric" min="1" placeholder="Enter number..." id="num-people" value="' + (formState.numPeople || '') + '" oninput="onNumPeopleChange(this.value)" />' +
+        '</div>' +
       '</div>' +
-    '</div>' +
-    '<p class="validation-msg" id="num-people-err">Number of people is required.</p>';
+      '<p class="validation-msg" id="num-people-err">Number of people is required.</p>';
+  }
  
+  const initiatedOptions = cfg.initiatedOptions || ['Responded to a call by a business', 'Encountered during normal rounds'];
   html += '' +
     '<div class="card">' +
       '<div class="card-header"><span>How was the interaction initiated?</span></div>' +
       (cfg.mutuallyExclusiveInitiated
-        ? renderRadioRow('init-0', 'Responded to a call by a business', formState.initiated.indexOf(0) >= 0, "selectInitiated(0)") +
-          renderRadioRow('init-1', 'Encountered during normal rounds', formState.initiated.indexOf(1) >= 0, "selectInitiated(1)")
-        : renderCheckRow('init-0', 'Responded to a call by a business', formState.initiated.indexOf(0) >= 0, "toggleArrayField('initiated', 0)") +
-          renderCheckRow('init-1', 'Encountered during normal rounds', formState.initiated.indexOf(1) >= 0, "toggleArrayField('initiated', 1)")) +
+        ? initiatedOptions.map(function(label, i) { return renderRadioRow('init-' + i, label, formState.initiated.indexOf(i) >= 0, "selectInitiated(" + i + ")"); }).join('')
+        : initiatedOptions.map(function(label, i) { return renderCheckRow('init-' + i, label, formState.initiated.indexOf(i) >= 0, "toggleArrayField('initiated', " + i + ")"); }).join('')) +
     '</div>';
  
   if (cfg.showHomelessInteraction) {
@@ -1201,9 +1207,11 @@ function handleSaveAndContinue() {
   const cfg = currentEngagementConfig;
   let valid = true;
  
-  if (!formState.numPeople || formState.numPeople < 1) {
-    document.getElementById('num-people-err').classList.add('show');
-    valid = false;
+  if (cfg.showNumPeople !== false) {
+    if (!formState.numPeople || formState.numPeople < 1) {
+      document.getElementById('num-people-err').classList.add('show');
+      valid = false;
+    }
   }
  
   // DPD Call validation for Criminal Activity
@@ -1228,9 +1236,8 @@ function handleSaveAndContinue() {
  
   DDC.setNumPeople(formState.numPeople);
  
-  const initiatedLabels = [];
-  if (formState.initiated.indexOf(0) >= 0) initiatedLabels.push('Responded to a call by a business');
-  if (formState.initiated.indexOf(1) >= 0) initiatedLabels.push('Encountered during normal rounds');
+  const initiatedOptionLabels = cfg.initiatedOptions || ['Responded to a call by a business', 'Encountered during normal rounds'];
+  const initiatedLabels = formState.initiated.map(function(i) { return initiatedOptionLabels[i]; }).filter(Boolean);
   DDC.setInteractionInitiated(initiatedLabels.join(', '));
  
   DDC.setNotes(formState.notes);
