@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -175,7 +176,7 @@ input, textarea, button, select { font-family: inherit; }
     </div>
     <div class="tab-bar">
       <div class="tab active">Start</div>
-      <div class="tab inactive" style="opacity:0.4;">Review &amp; Submit</div>
+    <div class="tab inactive" onclick="tryOpenReview()" style="cursor:pointer;">Review &amp; Submit</div>
     </div>
  
     <div class="content" id="content-area">
@@ -329,8 +330,18 @@ input, textarea, button, select { font-family: inherit; }
 <!-- DDC submission module -->
 <script src="ddc_app_submission.js"></script>
 <script src="ddc_engagement_form.js"></script>
+<script src="ddc_review_submit.js"></script>
  
 <script>
+function tryOpenReview() {
+  const session = DDC.getSession();
+  if (!session.engagement_type) {
+    showToast('Please complete the engagement form first.', 'error');
+    return;
+  }
+  if (typeof openReviewScreen === 'function') openReviewScreen();
+}
+ 
 // ── Login ─────────────────────────────────────────────────────────────────
  
 async function handleLogin() {
