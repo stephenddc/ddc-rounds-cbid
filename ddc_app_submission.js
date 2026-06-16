@@ -306,8 +306,8 @@ const DDC = (() => {
       return { success: false, errors };
     }
  
-    // Upload photo first if one was captured
-    if (state.session.photo_captured && state.session.photo_data) {
+    // Upload photo if one was taken (captured or chosen)
+    if (state.session.photo_data) {
       try {
         const photoResult = await apiPost({
           action:     'uploadPhoto',
