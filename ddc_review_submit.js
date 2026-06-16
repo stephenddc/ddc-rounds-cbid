@@ -29,6 +29,11 @@ function openReviewScreen() {
   const state = DDC.getState();
   const session = state.session;
  
+  // DIAGNOSTIC - remove after debugging
+  console.log('REVIEW SCREEN - photo_captured:', session.photo_captured);
+  console.log('REVIEW SCREEN - photo_data length:', session.photo_data ? session.photo_data.length : 'NULL');
+  console.log('REVIEW SCREEN - photo_url:', session.photo_url);
+ 
   // Update tab bar
   const tabBar = document.querySelector('.tab-bar');
   tabBar.innerHTML =
@@ -61,6 +66,15 @@ function reopenEngagementForm() {
 function buildReviewHTML(state) {
   const session = state.session;
   let html = '<div class="section-header">Review &amp; Submit</div>';
+ 
+  // TEMPORARY DEBUG BANNER - remove after photo issue is resolved
+  html += '' +
+    '<div style="background:#FFF3CD;border:1px solid #FFC107;border-radius:8px;margin:10px 12px;padding:10px 12px;font-size:12px;">' +
+      '<strong>Photo debug:</strong><br>' +
+      'photo_captured: ' + session.photo_captured + '<br>' +
+      'photo_data: ' + (session.photo_data ? 'present (' + session.photo_data.length + ' chars)' : 'NULL') + '<br>' +
+      'photo_url: ' + (session.photo_url || 'none') +
+    '</div>';
  
   // ── Session card ──
   html += '' +
