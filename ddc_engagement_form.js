@@ -19,6 +19,7 @@ const RESOURCES_OFFERED_TYPES = [
   'Clothing',
   'Medical',
   'Reunification',
+  'Other',
 ];
  
 const ER_TYPES = [
@@ -446,7 +447,6 @@ function makeEmptyResRecord() {
  
 function renderResolutionCycling() {
   const rec = resPanelState.records[resPanelState.current];
-  console.log('[DEBUG] renderResolutionCycling reading record=', JSON.stringify(rec));
   resPanelState.selectedCondition = rec.condition;
   resPanelState.selectedObs = rec.obs.slice();
   resPanelState.selectedResourcesOffered = rec.resourcesOffered;
@@ -506,6 +506,9 @@ function renderResolutionCycling() {
 }
  
 function renderResourcesOfferedSection() {
+  const OTHER_IDX = RESOURCES_OFFERED_TYPES.indexOf('Other');
+  const otherOffered = resPanelState.selectedResourcesDetail[OTHER_IDX] && resPanelState.selectedResourcesDetail[OTHER_IDX].offered;
+ 
   let rowsHtml = '';
   for (let i = 0; i < RESOURCES_OFFERED_TYPES.length; i++) {
     const d = resPanelState.selectedResourcesDetail[i];
@@ -523,29 +526,46 @@ function renderResourcesOfferedSection() {
       '</div>';
   }
  
+  // Other notes field — required when Other is offered
+  const otherNotesHtml = otherOffered ? '' +
+    '<div class="field-wrap" style="border-top:0.5px solid #E0E0E0;">' +
+      '<label class="form-label-sm">Other — please describe (required)</label>' +
+      '<textarea class="notes-area" id="res-other-notes" placeholder="Describe the other resource offered..." oninput="resPanelState.selectedResourcesNotes = this.value">' + escapeHtml(resPanelState.selectedResourcesNotes) + '</textarea>' +
+      '<p class="validation-msg" id="res-other-notes-err">Please describe the other resource offered.</p>' +
+    '</div>' : '' +
+    '<div class="field-wrap" style="border-top:0.5px solid #E0E0E0;">' +
+      '<label class="form-label-sm">Notes (optional)</label>' +
+      '<textarea class="notes-area" placeholder="Enter text..." oninput="resPanelState.selectedResourcesNotes = this.value">' + escapeHtml(resPanelState.selectedResourcesNotes) + '</textarea>' +
+    '</div>';
+ 
   return '' +
     '<div class="card" id="res-offered-detail-card">' +
-      '<div class="card-header"><span>Resources offered / accepted</span><p>Select all that apply</p></div>' +
+      '<div class="card-header"><span>Resources offered / accepted</span><p>At least one "Offered" box must be checked</p></div>' +
       '<div class="res-offer-table">' + rowsHtml + '</div>' +
-      '<div class="field-wrap">' +
-        '<label class="form-label-sm">Notes</label>' +
-        '<textarea class="notes-area" placeholder="Enter text..." oninput="resPanelState.selectedResourcesNotes = this.value">' + escapeHtml(resPanelState.selectedResourcesNotes) + '</textarea>' +
-      '</div>' +
+      '<p class="validation-msg" id="res-offered-detail-err">Please check at least one "Offered" box.</p>' +
+      otherNotesHtml +
     '</div>';
 }
  
 function selectResourcesOffered(val) {
-  console.log('[DEBUG] selectResourcesOffered called with', val, 'current selectedCondition=', resPanelState.selectedCondition, 'selectedObs=', JSON.stringify(resPanelState.selectedObs));
   resPanelState.selectedResourcesOffered = val;
   resPanelState.records[resPanelState.current] = buildResRecordFromPanel();
-  console.log('[DEBUG] saved record=', JSON.stringify(resPanelState.records[resPanelState.current]));
   document.getElementById('res-offered-err').classList.remove('show');
   renderResolutionCycling();
 }
  
 function toggleResourceDetail(idx, key) {
   resPanelState.selectedResourcesDetail[idx][key] = !resPanelState.selectedResourcesDetail[idx][key];
-  document.getElementById('res-' + (key === 'offered' ? 'offer' : 'accept') + '-' + idx).classList.toggle('checked');
+  const OTHER_IDX = RESOURCES_OFFERED_TYPES.indexOf('Other');
+  if (idx === OTHER_IDX && key === 'offered') {
+    // Re-render so the required notes field appears/disappears
+    resPanelState.records[resPanelState.current] = buildResRecordFromPanel();
+    renderResolutionCycling();
+  } else {
+    document.getElementById('res-' + (key === 'offered' ? 'offer' : 'accept') + '-' + idx).classList.toggle('checked');
+    const errEl = document.getElementById('res-offered-detail-err');
+    if (errEl) errEl.classList.remove('show');
+  }
 }
  
 function selectResCondition(idx) {
@@ -573,6 +593,22 @@ function resolutionSave(finish) {
   if (resPanelState.selectedResourcesOffered === null) {
     document.getElementById('res-offered-err').classList.add('show');
     return;
+  }
+  if (resPanelState.selectedResourcesOffered === true) {
+    const anyOffered = resPanelState.selectedResourcesDetail.some(function(d) { return d.offered; });
+    if (!anyOffered) {
+      const errEl = document.getElementById('res-offered-detail-err');
+      if (errEl) errEl.classList.add('show');
+      return;
+    }
+    const OTHER_IDX = RESOURCES_OFFERED_TYPES.indexOf('Other');
+    const otherOffered = resPanelState.selectedResourcesDetail[OTHER_IDX] && resPanelState.selectedResourcesDetail[OTHER_IDX].offered;
+    if (otherOffered && !resPanelState.selectedResourcesNotes.trim()) {
+      const errEl = document.getElementById('res-other-notes-err');
+      if (errEl) errEl.classList.add('show');
+      document.getElementById('res-other-notes').focus();
+      return;
+    }
   }
   resPanelState.records[resPanelState.current] = buildResRecordFromPanel();
   if (finish) renderResolutionSummary();
