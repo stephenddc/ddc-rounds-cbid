@@ -38,6 +38,7 @@ const DDC = (() => {
       time:             null,   // auto-set on session start
       location_id:      null,
       location_name:    null,
+      location_address: null,
       location_lat:     null,
       location_lng:     null,
       location_method:  null,   // 'business_list' | 'gps_pin'
@@ -147,6 +148,7 @@ const DDC = (() => {
       time:             now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
       location_id:      null,
       location_name:    null,
+      location_address: null,
       location_lat:     null,
       location_lng:     null,
       location_method:  null,
@@ -180,19 +182,21 @@ const DDC = (() => {
   function setLocationFromBusiness(locationId) {
     const loc = state.locations.find(l => l.location_id === locationId);
     if (!loc) throw new Error('Location not found: ' + locationId);
-    state.session.location_id     = loc.location_id;
-    state.session.location_name   = loc.name;
-    state.session.location_lat    = loc.latitude;
-    state.session.location_lng    = loc.longitude;
-    state.session.location_method = 'business_list';
+    state.session.location_id      = loc.location_id;
+    state.session.location_name    = loc.name;
+    state.session.location_address = loc.address || '';
+    state.session.location_lat     = loc.latitude;
+    state.session.location_lng     = loc.longitude;
+    state.session.location_method  = 'business_list';
   }
  
   function setLocationFromGPS(lat, lng, name) {
-    state.session.location_id     = null;
-    state.session.location_name   = name || 'GPS location';
-    state.session.location_lat    = lat;
-    state.session.location_lng    = lng;
-    state.session.location_method = 'gps_pin';
+    state.session.location_id      = null;
+    state.session.location_name    = name || 'GPS location';
+    state.session.location_address = '';
+    state.session.location_lat     = lat;
+    state.session.location_lng     = lng;
+    state.session.location_method  = 'gps_pin';
   }
  
   // ── Form field setters ────────────────────────────────────────────────────
