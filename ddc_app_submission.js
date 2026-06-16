@@ -155,7 +155,8 @@ const DDC = (() => {
       interaction_initiated: null,
       notes:            null,
       photo_captured:   false,
-      homeless_interaction_type: null,
+      photo_data:       null,
+      photo_url:        null,
       health_classification:     null,
       criminal_activity_types:   [],
       kgfs: { logged: false, types: [], notes: null },
@@ -201,7 +202,10 @@ const DDC = (() => {
   function setNumPeople(n)                 { state.session.num_people = parseInt(n); }
   function setInteractionInitiated(val)    { state.session.interaction_initiated = val; }
   function setNotes(text)                  { state.session.notes = text; }
-  function setPhotoCaptured(val)           { state.session.photo_captured = val; }
+  function setPhotoCaptured(captured, imageData) {
+    state.session.photo_captured = captured;
+    state.session.photo_data     = imageData || null;
+  }
   function setHomelessInteractionType(val) { state.session.homeless_interaction_type = val; }
   function setHealthClassification(val)    { state.session.health_classification = val; }
   function setCriminalActivityTypes(arr)   { state.session.criminal_activity_types = arr; }
@@ -302,14 +306,34 @@ const DDC = (() => {
       return { success: false, errors };
     }
  
+    // Upload photo first if one was captured
+    if (state.session.photo_captured && state.session.photo_data) {
+      try {
+        const photoResult = await apiPost({
+          action:     'uploadPhoto',
+          token:      state.token,
+          photo_data: state.session.photo_data,
+          mime_type:  'image/jpeg',
+        });
+        if (photoResult.photo_url) {
+          state.session.photo_url = photoResult.photo_url;
+        }
+      } catch (photoErr) {
+        // Don't block submission if photo upload fails — just log it
+        console.warn('Photo upload failed:', photoErr.message);
+      }
+      // Clear raw image data from payload — it's large and already uploaded
+      state.session.photo_data = null;
+    }
+ 
     // Build payload
     const payload = {
-      action:           'submitSession',
-      token:            state.token,
-      session:          state.session,
-      resolution:       state.resolution,
+      action:            'submitSession',
+      token:             state.token,
+      session:           state.session,
+      resolution:        state.resolution,
       emergencyResponse: state.emergencyResponse,
-      environmental:    state.environmental,
+      environmental:     state.environmental,
     };
  
     const result = await apiPost(payload);
