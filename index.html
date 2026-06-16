@@ -506,12 +506,14 @@ function handlePhoto(input, isCaptured) {
  
   const reader = new FileReader();
   reader.onload = (e) => {
-    const imageData = e.target.result; // full base64 data URL
+    const imageData = e.target.result;
+    console.log('Photo captured, data length:', imageData ? imageData.length : 0, 'isCaptured:', isCaptured);
     document.getElementById('photo-preview').src = imageData;
     document.getElementById('photo-thumb').classList.add('show');
     document.getElementById('photo-thumb-text').textContent =
       isCaptured ? 'Photo captured (date stamped)' : 'Photo selected (no date stamp — may be invalid)';
     DDC.setPhotoCaptured(isCaptured, imageData);
+    console.log('DDC photo_data set, length:', DDC.getSession().photo_data ? DDC.getSession().photo_data.length : 0);
   };
   reader.readAsDataURL(file);
 }
