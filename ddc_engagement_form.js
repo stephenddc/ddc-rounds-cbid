@@ -1335,7 +1335,10 @@ function handleSaveAndContinue() {
     DDC.setDpdCall(dpdLabels, formState.dpdCall.notes);
   }
  
-  showToast('Form data saved. Review & Submit screen coming in the next build step!', 'success');
+  showToast('Session details saved.', 'success');
+  setTimeout(function() {
+    if (typeof openReviewScreen === 'function') openReviewScreen();
+  }, 400);
   console.log('Full DDC state:', DDC.getState());
 }
  
