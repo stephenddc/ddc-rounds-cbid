@@ -50,6 +50,14 @@ const KGFS_TYPES = [
   'Trash Pick Up',
 ];
  
+const DPD_CALL_OPTIONS = [
+  '911',
+  '311',
+  'Non-emergency Police',
+  'No call was made',
+];
+const DPD_NO_CALL_IDX = 3; // index of 'No call was made'
+ 
 const HOMELESS_INTERACTION_TYPES = [
   'Trespassing - Request Removal from Property',
   'Blocking Right of Way - Request Relocation',
@@ -74,6 +82,8 @@ const ENGAGEMENT_CONFIGS = {
     showCriminalActivity: false,
     showFullSections: true,
     showCondition: true,
+    showResolution: true,
+    showDpdCall: false,
     mutuallyExclusiveInitiated: true,
   },
   'General Outreach': {
@@ -83,6 +93,8 @@ const ENGAGEMENT_CONFIGS = {
     showCriminalActivity: false,
     showFullSections: true,
     showCondition: false,
+    showResolution: true,
+    showDpdCall: false,
     mutuallyExclusiveInitiated: true,
   },
   'Blocking Right of Way/Trespassing': {
@@ -92,6 +104,8 @@ const ENGAGEMENT_CONFIGS = {
     showCriminalActivity: false,
     showFullSections: true,
     showCondition: true,
+    showResolution: true,
+    showDpdCall: false,
     mutuallyExclusiveInitiated: true,
   },
   'Physical/Mental Health Response': {
@@ -101,6 +115,8 @@ const ENGAGEMENT_CONFIGS = {
     showCriminalActivity: false,
     showFullSections: true,
     showCondition: true,
+    showResolution: true,
+    showDpdCall: false,
     mutuallyExclusiveInitiated: true,
   },
   'Business Engagement': {
@@ -110,6 +126,8 @@ const ENGAGEMENT_CONFIGS = {
     showCriminalActivity: false,
     showFullSections: false,
     showCondition: false,
+    showResolution: false,
+    showDpdCall: false,
     mutuallyExclusiveInitiated: false,
   },
   'Criminal Activity Observed': {
@@ -119,6 +137,8 @@ const ENGAGEMENT_CONFIGS = {
     showCriminalActivity: true,
     showFullSections: true,
     showCondition: true,
+    showResolution: false,
+    showDpdCall: true,
     mutuallyExclusiveInitiated: true,
   },
 };
@@ -134,6 +154,7 @@ let formState = {
   emergencyResponse: [],
   environmental: [],
   kgfs: [],
+  dpdCall: { selected: [], notes: '' },
 };
  
 let currentEngagementConfig = null;
@@ -150,6 +171,7 @@ function resetFormState() {
     emergencyResponse: [],
     environmental: [],
     kgfs: [],
+    dpdCall: { selected: [], notes: '' },
   };
 }
  
@@ -218,7 +240,7 @@ function renderEngagementForm() {
     html += '</div>';
   }
  
-  if (cfg.showFullSections) {
+  if (cfg.showFullSections && cfg.showResolution !== false) {
     const resStatus = getResolutionStatus();
     html += '' +
       '<div class="card">' +
@@ -240,17 +262,22 @@ function renderEngagementForm() {
     '</div>';
  
   if (cfg.showFullSections) {
-    const erCount = formState.emergencyResponse.length;
-    html += '<div class="card"><div class="card-header"><span>Emergency response</span></div>';
-    if (erCount > 0) {
-      html += renderSubRecordTable(formState.emergencyResponse.map(function(r) {
-        return {
-          label: r.types.map(function(i) { return ER_TYPES[i]; }).join(', '),
-          sub: r.support.map(function(i) { return ER_SUPPORT[i]; }).concat(r.resources.map(function(i) { return ER_RESOURCES[i]; })).join(', '),
-        };
-      }), 'emergencyResponse');
+    // DPD Call (Criminal Activity only) replaces Emergency Response
+    if (cfg.showDpdCall) {
+      html += renderDpdCallSection();
+    } else {
+      const erCount = formState.emergencyResponse.length;
+      html += '<div class="card"><div class="card-header"><span>Emergency response</span></div>';
+      if (erCount > 0) {
+        html += renderSubRecordTable(formState.emergencyResponse.map(function(r) {
+          return {
+            label: r.types.map(function(i) { return ER_TYPES[i]; }).join(', '),
+            sub: r.support.map(function(i) { return ER_SUPPORT[i]; }).concat(r.resources.map(function(i) { return ER_RESOURCES[i]; })).join(', '),
+          };
+        }), 'emergencyResponse');
+      }
+      html += '<button class="add-row-btn" onclick="openEmergencyResponsePanel()"><i class="ti ti-clipboard-plus"></i> Add</button></div>';
     }
-    html += '<button class="add-row-btn" onclick="openEmergencyResponsePanel()"><i class="ti ti-clipboard-plus"></i> Add</button></div>';
  
     const envCount = formState.environmental.length;
     html += '<div class="card"><div class="card-header"><span>Environmental concerns identified</span></div>';
@@ -980,6 +1007,61 @@ function erDone() {
  
 /* ENVIRONMENTAL CONCERNS PANEL */
  
+/* DPD CALL SECTION */
+ 
+function renderDpdCallSection() {
+  const sel = formState.dpdCall.selected;
+  const noCallSelected = sel.indexOf(DPD_NO_CALL_IDX) >= 0;
+ 
+  let optionsHtml = '';
+  for (let i = 0; i < DPD_CALL_OPTIONS.length; i++) {
+    optionsHtml += renderCheckRow('dpd-' + i, DPD_CALL_OPTIONS[i], sel.indexOf(i) >= 0, "toggleDpdCallOption(" + i + ")");
+  }
+ 
+  let noCallNotesHtml = '';
+  if (noCallSelected) {
+    noCallNotesHtml = '' +
+      '<div class="field-wrap" style="border-top:0.5px solid #E0E0E0;">' +
+        '<label class="form-label-sm">Why was no call made? (required)</label>' +
+        '<textarea class="notes-area" id="dpd-no-call-notes" placeholder="Explain why no call was made..." oninput="formState.dpdCall.notes = this.value">' + escapeHtml(formState.dpdCall.notes) + '</textarea>' +
+        '<p class="validation-msg" id="dpd-no-call-notes-err">Please explain why no call was made.</p>' +
+      '</div>';
+  }
+ 
+  return '' +
+    '<div class="card" id="dpd-call-card">' +
+      '<div class="card-header"><span>DPD Call Made</span><p>Select all that apply</p></div>' +
+      optionsHtml +
+      '<p class="validation-msg" id="dpd-call-err">Please select at least one option.</p>' +
+      noCallNotesHtml +
+    '</div>';
+}
+ 
+function toggleDpdCallOption(idx) {
+  const sel = formState.dpdCall.selected;
+  const NO_CALL = DPD_NO_CALL_IDX;
+ 
+  if (idx === NO_CALL) {
+    // "No call was made" is mutually exclusive with the others
+    if (sel.indexOf(NO_CALL) >= 0) {
+      formState.dpdCall.selected = [];
+    } else {
+      formState.dpdCall.selected = [NO_CALL];
+    }
+    formState.dpdCall.notes = '';
+  } else {
+    // Selecting a real call option clears "No call was made"
+    const noCallIdx = sel.indexOf(NO_CALL);
+    if (noCallIdx >= 0) sel.splice(noCallIdx, 1);
+    const i = sel.indexOf(idx);
+    if (i >= 0) sel.splice(i, 1);
+    else sel.push(idx);
+    formState.dpdCall.notes = '';
+  }
+ 
+  renderEngagementForm();
+}
+ 
 let envPanelState = { selectedTypes: [], notes: '' };
  
 function openEnvironmentalPanel() {
@@ -1124,6 +1206,21 @@ function handleSaveAndContinue() {
     valid = false;
   }
  
+  // DPD Call validation for Criminal Activity
+  if (cfg.showDpdCall) {
+    if (formState.dpdCall.selected.length === 0) {
+      const errEl = document.getElementById('dpd-call-err');
+      if (errEl) errEl.classList.add('show');
+      valid = false;
+    } else if (formState.dpdCall.selected.indexOf(DPD_NO_CALL_IDX) >= 0 && !formState.dpdCall.notes.trim()) {
+      const errEl = document.getElementById('dpd-no-call-notes-err');
+      if (errEl) errEl.classList.add('show');
+      const notesEl = document.getElementById('dpd-no-call-notes');
+      if (notesEl) notesEl.focus();
+      valid = false;
+    }
+  }
+ 
   if (!valid) {
     showToast('Please complete required fields.', 'error');
     return;
@@ -1208,6 +1305,12 @@ function handleSaveAndContinue() {
     DDC.setKgfs(true, allTypes, allNotes.join(' | '));
   } else {
     DDC.setKgfs(false, [], null);
+  }
+ 
+  // DPD Call (Criminal Activity only)
+  if (cfg.showDpdCall) {
+    const dpdLabels = formState.dpdCall.selected.map(function(i) { return DPD_CALL_OPTIONS[i]; });
+    DDC.setDpdCall(dpdLabels, formState.dpdCall.notes);
   }
  
   showToast('Form data saved. Review & Submit screen coming in the next build step!', 'success');
