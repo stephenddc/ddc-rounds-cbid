@@ -29,11 +29,6 @@ function openReviewScreen() {
   const state = DDC.getState();
   const session = state.session;
  
-  // DIAGNOSTIC - remove after debugging
-  console.log('REVIEW SCREEN - photo_captured:', session.photo_captured);
-  console.log('REVIEW SCREEN - photo_data length:', session.photo_data ? session.photo_data.length : 'NULL');
-  console.log('REVIEW SCREEN - photo_url:', session.photo_url);
- 
   // Update tab bar
   const tabBar = document.querySelector('.tab-bar');
   tabBar.innerHTML =
@@ -67,15 +62,6 @@ function buildReviewHTML(state) {
   const session = state.session;
   let html = '<div class="section-header">Review &amp; Submit</div>';
  
-  // TEMPORARY DEBUG BANNER - remove after photo issue is resolved
-  html += '' +
-    '<div style="background:#FFF3CD;border:1px solid #FFC107;border-radius:8px;margin:10px 12px;padding:10px 12px;font-size:12px;">' +
-      '<strong>Photo debug:</strong><br>' +
-      'photo_captured: ' + session.photo_captured + '<br>' +
-      'photo_data: ' + (session.photo_data ? 'present (' + session.photo_data.length + ' chars)' : 'NULL') + '<br>' +
-      'photo_url: ' + (session.photo_url || 'none') +
-    '</div>';
- 
   // ── Session card ──
   html += '' +
     '<div class="card">' +
@@ -97,7 +83,7 @@ function buildReviewHTML(state) {
     detailsContent += reviewRow('ti-alert-triangle', 'Activity observed', session.criminal_activity_types.join(', '));
   }
   if (session.notes) detailsContent += reviewRow('ti-notes', 'Notes', session.notes);
-  if (session.photo_captured) {
+  if (session.photo_data || session.photo_url) {
     const photoContent = session.photo_data
       ? '<div style="margin-top:6px;"><img src="' + session.photo_data + '" style="width:100%;max-width:300px;border-radius:8px;display:block;" /></div>'
       : '<span style="color:#5a6a7a;font-style:italic;">Photo captured — will upload on submit</span>';
