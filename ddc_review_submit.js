@@ -1,3 +1,4 @@
+
 /**
  * DDC Rounds App — Review & Submit Module
  * ========================================
@@ -6,7 +7,7 @@
  *
  * Depends on: ddc_app_submission.js, ddc_engagement_form.js
  */
-
+ 
 // ── Constants (mirrors ddc_engagement_form.js for display) ───────────────
 const RS_RESOLUTION_CONDITIONS = [
   'Non combative, left voluntarily',
@@ -21,31 +22,31 @@ const RS_ER_RESOURCES= ['911', 'Non-emergency Police', 'Mental Health Profession
 const RS_ENV_TYPES   = ['Damage to Assets','Dangerous Sidewalk','Road Conditions','Erosion','Water Leaks','Encumbrances','Damage to CBID Assets','Sidewalk Damage'];
 const RS_KGFS_TYPES  = ['Human Waste Clean Up','Human Biohazard Clean Up','Graffiti Removal','Trash Pick Up'];
 const RS_RESOURCES_OFFERED = ['Shelter','Meals','Clothing','Medical','Reunification','Other'];
-
+ 
 // ── Entry point ───────────────────────────────────────────────────────────
-
+ 
 function openReviewScreen() {
   const state = DDC.getState();
   const session = state.session;
-
+ 
   // Update tab bar
   const tabBar = document.querySelector('.tab-bar');
   tabBar.innerHTML =
     '<div class="tab inactive" onclick="goToStartScreen()">Start</div>' +
     '<div class="tab inactive" onclick="reopenEngagementForm()">Form</div>' +
     '<div class="tab active">Review &amp; Submit</div>';
-
+ 
   const content = document.getElementById('content-area');
   content.innerHTML = buildReviewHTML(state);
   content.scrollTop = 0;
-
+ 
   // Update bottom button
   const bottomWrap = document.querySelector('.bottom-btn-wrap');
   bottomWrap.innerHTML =
     '<button class="btn-ghost-round" onclick="reopenEngagementForm()"><i class="ti ti-arrow-left"></i> Back</button>' +
     '<button class="btn-submit-main" onclick="handleSubmit()"><i class="ti ti-send"></i> Submit Session</button>';
 }
-
+ 
 function reopenEngagementForm() {
   const session = DDC.getSession();
   if (session.engagement_type) {
@@ -54,13 +55,13 @@ function reopenEngagementForm() {
     goToStartScreen();
   }
 }
-
+ 
 // ── Build the full review HTML ────────────────────────────────────────────
-
+ 
 function buildReviewHTML(state) {
   const session = state.session;
   let html = '<div class="section-header">Review &amp; Submit</div>';
-
+ 
   // ── Session card ──
   html += '' +
     '<div class="card">' +
@@ -71,7 +72,7 @@ function buildReviewHTML(state) {
       reviewRow('ti-map-pin',  'Location',          session.location_name || '<span class="rs-missing">Not set</span>') +
       reviewRow('ti-category', 'Engagement type',   session.engagement_type || '<span class="rs-missing">Not set</span>') +
     '</div>';
-
+ 
   // ── Engagement details card ──
   let detailsContent = '';
   if (session.num_people)           detailsContent += reviewRow('ti-users',      'No. of people',    session.num_people);
@@ -82,12 +83,17 @@ function buildReviewHTML(state) {
     detailsContent += reviewRow('ti-alert-triangle', 'Activity observed', session.criminal_activity_types.join(', '));
   }
   if (session.notes) detailsContent += reviewRow('ti-notes', 'Notes', session.notes);
-  if (session.photo_captured) detailsContent += reviewRow('ti-camera', 'Photo', 'Captured (date stamped)');
-
+  if (session.photo_captured) {
+    const photoContent = session.photo_data
+      ? '<div style="margin-top:6px;"><img src="' + session.photo_data + '" style="width:100%;max-width:300px;border-radius:8px;display:block;" /></div>'
+      : '<span style="color:#5a6a7a;font-style:italic;">Photo captured — will upload on submit</span>';
+    detailsContent += reviewRow('ti-camera', 'Photo', photoContent);
+  }
+ 
   if (detailsContent) {
     html += '<div class="card"><div class="card-header"><span>Engagement details</span></div>' + detailsContent + '</div>';
   }
-
+ 
   // ── Engagement Resolution ──
   if (state.resolution && state.resolution.length > 0) {
     html += '<div class="card"><div class="card-header"><span>Engagement resolution</span></div>';
@@ -97,7 +103,7 @@ function buildReviewHTML(state) {
       if (r.weapons_observed)         obsLabels.push('Weapons observed');
       if (r.drug_supplies_observed)   obsLabels.push('Drug supplies observed');
       if (r.active_drug_use_observed) obsLabels.push('Active drug use observed');
-
+ 
       html += '' +
         '<div class="rs-person-row">' +
           '<div class="rs-person-num">' + (i + 1) + '</div>' +
@@ -110,7 +116,7 @@ function buildReviewHTML(state) {
     });
     html += '</div>';
   }
-
+ 
   // ── Emergency Response ──
   if (state.emergencyResponse && state.emergencyResponse.length > 0) {
     html += '<div class="card"><div class="card-header"><span>Emergency response</span></div>';
@@ -125,7 +131,7 @@ function buildReviewHTML(state) {
       if (er.contacted_non_emergency_police)       resourceLabels.push('Non-emergency Police');
       if (er.contacted_mental_health_professional) resourceLabels.push('Mental Health Professional');
       if (er.contacted_311)                        resourceLabels.push('311');
-
+ 
       html += '' +
         '<div class="rs-person-row">' +
           '<div class="rs-person-num" style="background:#C62828;">' + (i + 1) + '</div>' +
@@ -139,7 +145,7 @@ function buildReviewHTML(state) {
     });
     html += '</div>';
   }
-
+ 
   // ── DPD Call Made ──
   if (session.dpd_call && session.dpd_call.options && session.dpd_call.options.length > 0) {
     const dpdTags = session.dpd_call.options.map(function(o) { return '<span class="tag tag-blue">' + escapeHtml(o) + '</span>'; }).join('');
@@ -150,7 +156,7 @@ function buildReviewHTML(state) {
     }
     html += '</div>';
   }
-
+ 
   // ── Environmental ──
   if (state.environmental && state.environmental.length > 0) {
     html += '<div class="card"><div class="card-header"><span>Environmental concerns identified</span></div>';
@@ -161,7 +167,7 @@ function buildReviewHTML(state) {
     });
     html += '</div>';
   }
-
+ 
   // ── KGFS ──
   if (session.kgfs && session.kgfs.logged) {
     html += '' +
@@ -179,13 +185,13 @@ function buildReviewHTML(state) {
         '</div>' +
       '</div>';
   }
-
+ 
   html += '<div style="height:16px;"></div>';
   return html;
 }
-
+ 
 // ── Helper: build resources offered summary per resolution record ──────────
-
+ 
 function buildResourcesOfferedSummary(r) {
   if (!r.resources_offered) {
     return '<div style="margin-top:2px;font-size:11px;color:#5a6a7a;">No resources offered</div>';
@@ -204,9 +210,9 @@ function buildResourcesOfferedSummary(r) {
   const notesHtml = r.resources_notes ? '<div style="font-size:11px;color:#5a6a7a;margin-top:2px;font-style:italic;">' + escapeHtml(r.resources_notes) + '</div>' : '';
   return '<div style="margin-top:2px;">' + tags.join('') + '</div>' + notesHtml;
 }
-
+ 
 // ── Helper: review row ────────────────────────────────────────────────────
-
+ 
 function reviewRow(icon, label, value) {
   return '' +
     '<div class="rs-row">' +
@@ -217,44 +223,44 @@ function reviewRow(icon, label, value) {
       '</div>' +
     '</div>';
 }
-
+ 
 // ── Submit handler ────────────────────────────────────────────────────────
-
+ 
 async function handleSubmit() {
   const btn = document.querySelector('.btn-submit-main');
   if (!btn) return;
-
+ 
   // Run client-side validation first
   const errors = DDC.validate();
   if (errors.length > 0) {
     showToast(errors[0].message, 'error');
     return;
   }
-
+ 
   btn.innerHTML = '<span class="spinner"></span> Submitting…';
   btn.disabled = true;
-
+ 
   try {
     const result = await DDC.submitSession();
-
+ 
     if (!result.success) {
       showToast('Submission failed: ' + (result.errors ? result.errors[0].message : 'Unknown error'), 'error');
       btn.innerHTML = '<i class="ti ti-send"></i> Submit Session';
       btn.disabled = false;
       return;
     }
-
+ 
     showSuccessOverlay(result.kgfs_notified);
-
+ 
   } catch (err) {
     showToast('Submission failed: ' + err.message, 'error');
     btn.innerHTML = '<i class="ti ti-send"></i> Submit Session';
     btn.disabled = false;
   }
 }
-
+ 
 // ── Success overlay ───────────────────────────────────────────────────────
-
+ 
 function showSuccessOverlay(kgfsNotified) {
   let overlay = document.getElementById('success-overlay');
   if (!overlay) {
@@ -263,7 +269,7 @@ function showSuccessOverlay(kgfsNotified) {
     overlay.className = 'success-overlay';
     document.body.appendChild(overlay);
   }
-
+ 
   const kgfsHtml = kgfsNotified ? '' +
     '<div class="success-kgfs">' +
       '<i class="ti ti-mail-check"></i>' +
@@ -272,7 +278,7 @@ function showSuccessOverlay(kgfsNotified) {
         '<span>Email sent to Mitch Freund</span>' +
       '</div>' +
     '</div>' : '';
-
+ 
   overlay.innerHTML = '' +
     '<div class="success-box">' +
       '<div class="success-icon"><i class="ti ti-circle-check"></i></div>' +
@@ -281,10 +287,10 @@ function showSuccessOverlay(kgfsNotified) {
       kgfsHtml +
       '<button class="btn-done-submit" onclick="startNewRound()">Start new session</button>' +
     '</div>';
-
+ 
   overlay.classList.add('open');
 }
-
+ 
 function startNewRound() {
   document.getElementById('success-overlay').classList.remove('open');
   DDC.startNewSession();
