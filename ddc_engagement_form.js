@@ -1229,6 +1229,22 @@ function handleSaveAndContinue() {
     }
   }
  
+  // Non-responsive ER check — warn if ER records are insufficient
+  if (cfg.showResolution !== false && cfg.showFullSections) {
+    const nonResponsiveCount = formState.resolution.filter(function(r) {
+      return r.condition === 3; // index 3 = 'Non responsive, health situation'
+    }).length;
+    if (nonResponsiveCount > 0 && formState.emergencyResponse.length < nonResponsiveCount) {
+      showToast(
+        nonResponsiveCount + ' person' + (nonResponsiveCount > 1 ? 's' : '') +
+        ' marked Non Responsive — please complete at least ' + nonResponsiveCount +
+        ' Emergency Response record' + (nonResponsiveCount > 1 ? 's' : '') + '.',
+        'error'
+      );
+      valid = false;
+    }
+  }
+ 
   if (!valid) {
     showToast('Please complete required fields.', 'error');
     return;
