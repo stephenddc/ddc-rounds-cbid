@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -450,10 +451,7 @@ function renderBizRows(locations) {
   }
   list.innerHTML = locations.map(loc => `
     <div class="biz-row" onclick="selectBiz('${loc.location_id}')">
-      <div>
-        <div class="biz-name">${escapeHtml(loc.name)}</div>
-        <div class="biz-addr">${escapeHtml(loc.address || loc.cross_street || '')}</div>
-      </div>
+      <div class="biz-name">${escapeHtml(loc.name)}</div>
       <i class="ti ti-chevron-right"></i>
     </div>
   `).join('');
