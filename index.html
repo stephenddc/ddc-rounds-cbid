@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -449,7 +448,8 @@ function renderBizRows(locations) {
     list.innerHTML = '<div class="biz-no-results">No matches found.</div>';
     return;
   }
-  list.innerHTML = locations.map(loc => `
+  const sorted = locations.slice().sort((a, b) => a.name.localeCompare(b.name));
+  list.innerHTML = sorted.map(loc => `
     <div class="biz-row" onclick="selectBiz('${loc.location_id}')">
       <div class="biz-name">${escapeHtml(loc.name)}</div>
       <i class="ti ti-chevron-right"></i>
