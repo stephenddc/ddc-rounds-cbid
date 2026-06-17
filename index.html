@@ -107,8 +107,10 @@ input, textarea, button, select { font-family: inherit; }
 .loc-opt-text span { font-size: 12px; color: #5a6a7a; }
 .sheet-cancel { width: 100%; padding: 13px; margin-top: 10px; background: #f5f5f5; border: none; border-radius: 8px; font-size: 14px; color: #5a6a7a; cursor: pointer; }
  
-.biz-list { margin-top: 4px; }
-.biz-row { display: flex; align-items: center; justify-content: space-between; padding: 13px 0; border-top: 0.5px solid #E0E0E0; cursor: pointer; }
+.biz-search { width: 100%; padding: 10px 12px 10px 36px; border: 1.5px solid #E0E0E0; border-radius: 8px; font-size: 14px; color: #1a2332; margin: 10px 0 6px; background: #f5f5f5 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235a6a7a' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center; outline: none; box-sizing: border-box; }
+.biz-search:focus { border-color: #1565C0; background-color: #fff; }
+.biz-no-results { text-align: center; padding: 20px; color: #5a6a7a; font-size: 13px; }
+.biz-list { margin-top: 4px; max-height: 55vh; overflow-y: auto; } align-items: center; justify-content: space-between; padding: 13px 0; border-top: 0.5px solid #E0E0E0; cursor: pointer; }
 .biz-row:first-of-type { border-top: none; }
 .biz-row:active { opacity: 0.6; }
 .biz-name { font-size: 14px; color: #1a2332; }
@@ -301,6 +303,7 @@ input, textarea, button, select { font-family: inherit; }
   <div class="sheet">
     <h3>Select business</h3>
     <p>E Colfax Ave — Logan St to Josephine St</p>
+    <input class="biz-search" id="biz-search" type="text" placeholder="Search by name or address…" oninput="filterBizList(this.value)" autocomplete="off" autocorrect="off" autocapitalize="off" />
     <div class="biz-list" id="biz-list">
       <div style="text-align:center;padding:20px;color:#5a6a7a;font-size:13px;">Loading locations…</div>
     </div>
@@ -414,6 +417,8 @@ function closeOverlay(id) {
 async function showBizList() {
   closeOverlay('loc-modal');
   const list = document.getElementById('biz-list');
+  const search = document.getElementById('biz-search');
+  search.value = '';
   document.getElementById('biz-modal').classList.add('open');
  
   // Locations were loaded on init — but refresh if empty
@@ -432,15 +437,42 @@ async function showBizList() {
     return;
   }
  
+  renderBizRows(locations);
+  // Focus the search box after a short delay to let the modal animate in
+  setTimeout(() => search.focus(), 200);
+}
+ 
+function renderBizRows(locations) {
+  const list = document.getElementById('biz-list');
+  if (locations.length === 0) {
+    list.innerHTML = '<div class="biz-no-results">No matches found.</div>';
+    return;
+  }
   list.innerHTML = locations.map(loc => `
     <div class="biz-row" onclick="selectBiz('${loc.location_id}')">
       <div>
         <div class="biz-name">${escapeHtml(loc.name)}</div>
-        <div class="biz-addr">${escapeHtml(loc.cross_street || loc.address || '')}</div>
+        <div class="biz-addr">${escapeHtml(loc.address || loc.cross_street || '')}</div>
       </div>
       <i class="ti ti-chevron-right"></i>
     </div>
   `).join('');
+}
+ 
+function filterBizList(query) {
+  const locations = DDC.locations;
+  if (!locations || locations.length === 0) return;
+  const q = query.trim().toLowerCase();
+  if (!q) {
+    renderBizRows(locations);
+    return;
+  }
+  const filtered = locations.filter(loc =>
+    loc.name.toLowerCase().includes(q) ||
+    (loc.address && loc.address.toLowerCase().includes(q)) ||
+    (loc.cross_street && loc.cross_street.toLowerCase().includes(q))
+  );
+  renderBizRows(filtered);
 }
  
 function selectBiz(locationId) {
