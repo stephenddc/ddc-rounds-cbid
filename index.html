@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -158,6 +157,9 @@ input, textarea, button, select { font-family: inherit; }
              onkeydown="if(event.key==='Enter') handleLogin()" />
     </div>
     <button class="btn-primary" id="login-btn" onclick="handleLogin()">Sign in</button>
+    <div style="text-align:center;margin-top:14px;">
+      <button onclick="openForgotPassword()" style="background:none;border:none;color:#1565C0;font-size:13px;cursor:pointer;text-decoration:underline;">Forgot password?</button>
+    </div>
     <div class="login-error" id="login-error"></div>
   </div>
 </div>
@@ -175,7 +177,7 @@ input, textarea, button, select { font-family: inherit; }
     <div class="top-nav">
       <button class="nav-exit" onclick="handleExit()"><i class="ti ti-logout"></i> Exit</button>
       <div class="nav-title">Rounds – Colfax</div>
-      <button class="nav-exit" onclick="openChangePassword()" title="Change password"><i class="ti ti-lock"></i></button>
+      <button class="nav-exit" onclick="openChangePassword()" title="Change password"><i class="ti ti-lock"></i> Password</button>
     </div>
     <div class="tab-bar">
       <div class="tab active">Start</div>
@@ -313,6 +315,26 @@ input, textarea, button, select { font-family: inherit; }
   </div>
 </div>
  
+<!-- Forgot Password Modal -->
+<div class="overlay" id="forgot-modal">
+  <div class="sheet">
+    <h3>Reset Password</h3>
+    <p>Enter your email address and we'll send you a temporary password.</p>
+    <div style="margin-top:16px;">
+      <div style="margin-bottom:16px;">
+        <label class="form-label-sm" style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#5a6a7a;margin-bottom:6px;">Email address</label>
+        <input type="email" id="forgot-email" class="num-input" placeholder="your@email.com" style="width:100%;" />
+      </div>
+      <p class="validation-msg" id="forgot-error" style="display:none;color:#C62828;font-size:13px;margin-bottom:10px;"></p>
+      <p id="forgot-success" style="display:none;color:#2E7D32;font-size:13px;margin-bottom:10px;"></p>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn-ghost-round" style="flex:1;" onclick="closeOverlay('forgot-modal')">Cancel</button>
+      <button class="btn-round active-state" style="flex:1;" id="forgot-btn" onclick="submitForgotPassword()">Send</button>
+    </div>
+  </div>
+</div>
+ 
 <!-- Change Password Modal -->
 <div class="overlay" id="pw-modal">
   <div class="sheet">
@@ -372,6 +394,47 @@ function tryOpenReview() {
     return;
   }
   if (typeof openReviewScreen === 'function') openReviewScreen();
+}
+ 
+function openForgotPassword() {
+  document.getElementById('forgot-email').value = '';
+  document.getElementById('forgot-error').style.display = 'none';
+  document.getElementById('forgot-success').style.display = 'none';
+  document.getElementById('forgot-btn').textContent = 'Send';
+  document.getElementById('forgot-btn').disabled = false;
+  document.getElementById('forgot-modal').classList.add('open');
+}
+ 
+async function submitForgotPassword() {
+  const email  = document.getElementById('forgot-email').value.trim();
+  const errEl  = document.getElementById('forgot-error');
+  const succEl = document.getElementById('forgot-success');
+  const btn    = document.getElementById('forgot-btn');
+ 
+  errEl.style.display = 'none';
+  succEl.style.display = 'none';
+ 
+  if (!email) {
+    errEl.textContent = 'Please enter your email address.';
+    errEl.style.display = 'block';
+    return;
+  }
+ 
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+ 
+  try {
+    await DDC.selfResetPassword(email);
+    succEl.textContent = 'A temporary password has been sent to ' + email + '. Please check your inbox.';
+    succEl.style.display = 'block';
+    btn.textContent = 'Sent';
+    setTimeout(function() { closeOverlay('forgot-modal'); }, 3000);
+  } catch (err) {
+    errEl.textContent = err.message || 'Password reset failed. Please try again.';
+    errEl.style.display = 'block';
+    btn.textContent = 'Send';
+    btn.disabled = false;
+  }
 }
  
 function openChangePassword() {
