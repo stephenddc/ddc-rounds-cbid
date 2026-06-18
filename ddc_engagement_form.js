@@ -1244,6 +1244,21 @@ function handleSaveAndContinue() {
     }
   }
  
+  // Resolution completeness check — all people must have a resolution record
+  if (cfg.showResolution !== false && cfg.showFullSections && formState.numPeople > 0) {
+    const resolutionCount = formState.resolution.length;
+    const required = formState.numPeople;
+    if (resolutionCount < required) {
+      showToast(
+        'Please complete Engagement Resolution for all ' + required +
+        ' person' + (required > 1 ? 's' : '') + '. ' +
+        resolutionCount + ' of ' + required + ' recorded.',
+        'error'
+      );
+      return;
+    }
+  }
+ 
   if (!valid) {
     showToast('Please complete required fields.', 'error');
     return;
