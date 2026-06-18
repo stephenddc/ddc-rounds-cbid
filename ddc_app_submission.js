@@ -236,6 +236,15 @@ const DDC = (() => {
     return result;
   }
  
+  async function selfResetPassword(email) {
+    const result = await apiPost({
+      action: 'selfResetPassword',
+      email:  email,
+    });
+    if (!result.success) throw new Error(result.error || 'Password reset failed');
+    return result;
+  }
+ 
   // ── Resolution records ────────────────────────────────────────────────────
  
   function setResolution(records) {
@@ -408,6 +417,7 @@ const DDC = (() => {
     setKgfs,
     setDpdCall,
     changePassword,
+    selfResetPassword,
     setResolution,
     setEmergencyResponse,
     setEnvironmental,
