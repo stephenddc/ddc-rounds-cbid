@@ -222,6 +222,20 @@ const DDC = (() => {
     state.session.dpd_call = { options: options || [], notes: notes || null };
   }
  
+  // ── Change password ───────────────────────────────────────────────────────
+ 
+  async function changePassword(currentPassword, newPassword) {
+    if (!state.token) throw new Error('Not logged in');
+    const result = await apiPost({
+      action:           'changePassword',
+      token:            state.token,
+      current_password: currentPassword,
+      new_password:     newPassword,
+    });
+    if (!result.success) throw new Error(result.error || 'Password change failed');
+    return result;
+  }
+ 
   // ── Resolution records ────────────────────────────────────────────────────
  
   function setResolution(records) {
@@ -393,6 +407,7 @@ const DDC = (() => {
     setCriminalActivityTypes,
     setKgfs,
     setDpdCall,
+    changePassword,
     setResolution,
     setEmergencyResponse,
     setEnvironmental,
