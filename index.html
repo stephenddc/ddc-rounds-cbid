@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -110,12 +111,13 @@ input, textarea, button, select { font-family: inherit; }
 .biz-search { width: 100%; padding: 10px 12px 10px 36px; border: 1.5px solid #E0E0E0; border-radius: 8px; font-size: 14px; color: #1a2332; margin: 10px 0 6px; background: #f5f5f5 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235a6a7a' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center; outline: none; box-sizing: border-box; }
 .biz-search:focus { border-color: #1565C0; background-color: #fff; }
 .biz-no-results { text-align: center; padding: 20px; color: #5a6a7a; font-size: 13px; }
-.biz-list { margin-top: 4px; max-height: 55vh; overflow-y: auto; } align-items: center; justify-content: space-between; padding: 13px 0; border-top: 0.5px solid #E0E0E0; cursor: pointer; }
+.biz-list { margin-top: 4px; max-height: 55vh; overflow-y: auto; }
+.biz-row { display: flex; align-items: center; justify-content: space-between; padding: 16px 4px; border-top: 0.5px solid #E0E0E0; cursor: pointer; min-height: 52px; }
 .biz-row:first-of-type { border-top: none; }
 .biz-row:active { opacity: 0.6; }
-.biz-name { font-size: 14px; color: #1a2332; }
+.biz-name { font-size: 14px; color: #1a2332; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; margin-right: 8px; }
 .biz-addr { font-size: 12px; color: #5a6a7a; }
-.biz-row i { font-size: 16px; color: #5a6a7a; }
+.biz-row i { font-size: 16px; color: #5a6a7a; flex-shrink: 0; }
  
 .gps-status { text-align: center; padding: 20px 0; }
 .gps-status i { font-size: 36px; color: #1565C0; }
@@ -173,7 +175,7 @@ input, textarea, button, select { font-family: inherit; }
     <div class="top-nav">
       <button class="nav-exit" onclick="handleExit()"><i class="ti ti-logout"></i> Exit</button>
       <div class="nav-title">Rounds – Colfax</div>
-      <div class="nav-spacer"></div>
+      <button class="nav-exit" onclick="openChangePassword()" title="Change password"><i class="ti ti-lock"></i></button>
     </div>
     <div class="tab-bar">
       <div class="tab active">Start</div>
@@ -311,7 +313,35 @@ input, textarea, button, select { font-family: inherit; }
   </div>
 </div>
  
+<!-- Change Password Modal -->
+<div class="overlay" id="pw-modal">
+  <div class="sheet">
+    <h3>Change Password</h3>
+    <p>Enter your current password and choose a new one.</p>
+    <div style="margin-top:16px;">
+      <div style="margin-bottom:12px;">
+        <label class="form-label-sm" style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#5a6a7a;margin-bottom:6px;">Current password</label>
+        <input type="password" id="pw-current" class="num-input" placeholder="Enter current password" style="width:100%;" />
+      </div>
+      <div style="margin-bottom:12px;">
+        <label class="form-label-sm" style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#5a6a7a;margin-bottom:6px;">New password</label>
+        <input type="password" id="pw-new" class="num-input" placeholder="At least 8 characters" style="width:100%;" />
+      </div>
+      <div style="margin-bottom:16px;">
+        <label class="form-label-sm" style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#5a6a7a;margin-bottom:6px;">Confirm new password</label>
+        <input type="password" id="pw-confirm" class="num-input" placeholder="Repeat new password" style="width:100%;" />
+      </div>
+      <p class="validation-msg" id="pw-error" style="display:none;color:#C62828;font-size:13px;margin-bottom:10px;"></p>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn-ghost-round" style="flex:1;" onclick="closeOverlay('pw-modal')">Cancel</button>
+      <button class="btn-round active-state" style="flex:1;" onclick="submitChangePassword()">Update</button>
+    </div>
+  </div>
+</div>
+ 
 <!-- GPS status overlay -->
+ 
 <div class="overlay" id="gps-modal">
   <div class="sheet">
     <h3>Getting your location</h3>
@@ -342,6 +372,57 @@ function tryOpenReview() {
     return;
   }
   if (typeof openReviewScreen === 'function') openReviewScreen();
+}
+ 
+function openChangePassword() {
+  document.getElementById('pw-current').value = '';
+  document.getElementById('pw-new').value = '';
+  document.getElementById('pw-confirm').value = '';
+  const errEl = document.getElementById('pw-error');
+  errEl.style.display = 'none';
+  errEl.textContent = '';
+  document.getElementById('pw-modal').classList.add('open');
+}
+ 
+async function submitChangePassword() {
+  const current = document.getElementById('pw-current').value;
+  const newPw   = document.getElementById('pw-new').value;
+  const confirm = document.getElementById('pw-confirm').value;
+  const errEl   = document.getElementById('pw-error');
+ 
+  errEl.style.display = 'none';
+ 
+  if (!current || !newPw || !confirm) {
+    errEl.textContent = 'Please fill in all fields.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (newPw.length < 8) {
+    errEl.textContent = 'New password must be at least 8 characters.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (newPw !== confirm) {
+    errEl.textContent = 'New passwords do not match.';
+    errEl.style.display = 'block';
+    return;
+  }
+ 
+  const btn = document.querySelector('#pw-modal .btn-round');
+  btn.textContent = 'Updating…';
+  btn.disabled = true;
+ 
+  try {
+    await DDC.changePassword(current, newPw);
+    closeOverlay('pw-modal');
+    showToast('Password updated successfully.', 'success');
+  } catch (err) {
+    errEl.textContent = err.message || 'Password update failed.';
+    errEl.style.display = 'block';
+  } finally {
+    btn.textContent = 'Update';
+    btn.disabled = false;
+  }
 }
  
 // ── Login ─────────────────────────────────────────────────────────────────
