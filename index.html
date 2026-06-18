@@ -470,9 +470,14 @@ function enterApp(user) {
 function handleExit() {
   if (!confirm('Exit and return to login? Any unsaved progress will be lost.')) return;
   DDC.logout();
+  const btn = document.getElementById('login-btn');
+  btn.textContent = 'Sign in';
+  btn.disabled = false;
+  document.getElementById('login-error').classList.remove('show');
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-password').value = '';
   document.getElementById('app').classList.remove('ready');
   document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('login-password').value = '';
   resetStartScreen();
 }
  
