@@ -70,6 +70,7 @@ const CRIMINAL_ACTIVITY_TYPES_LIST = [
   'Physical Altercation between 2 or more people',
   'Arson',
   'Vandalism',
+  'Drug Transaction'
 ];
  
 const HEALTH_CLASSIFICATIONS = ['Physical', 'Mental', 'Physical & Mental'];
